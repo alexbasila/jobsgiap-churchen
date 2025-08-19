@@ -3,69 +3,198 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>GIAP · Churchen Mini</title>
+  <title>GIAP · Churchen</title>
   <style>
     body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;margin:0;background:#fafafa;color:#111}
-    main{max-width:820px;margin:0 auto;padding:16px}
+    main{max-width:900px;margin:0 auto;padding:16px}
     h1{margin:12px 0}
-    .card{background:#fff;border:1px solid #eee;border-radius:12px;padding:16px;box-shadow:0 4px 18px rgba(0,0,0,.04)}
+    .card{background:#fff;border:1px solid #eee;border-radius:12px;padding:16px;box-shadow:0 4px 18px rgba(0,0,0,.04);margin:12px 0}
     textarea{width:100%;min-height:120px;padding:12px;border:1px solid #ddd;border-radius:10px;font:inherit}
+    input{width:100%;padding:10px;border:1px solid #ddd;border-radius:10px;font:inherit}
+    input[readonly]{background:#f8f8f8}
     button{padding:10px 14px;border-radius:10px;border:1px solid #111;background:#111;color:#fff;font-weight:600;cursor:pointer}
+    button.secondary{background:#fff;color:#111}
     .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-    input[readonly]{width:100%;padding:10px;border:1px solid #ddd;border-radius:10px;font:inherit;background:#f8f8f8}
-    label{display:block;font-size:12px;color:#555;margin:8px 0 4px}
     .muted{color:#666;font-size:13px;margin-top:8px}
+    table{width:100%;border-collapse:collapse}
+    th,td{border-bottom:1px solid #eee;padding:8px;text-align:left;vertical-align:top;font-size:14px}
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;border:1px solid #111;background:#fff;color:#111;font-size:12px;cursor:pointer}
+    .pill + .pill{margin-left:6px}
   </style>
 </head>
 <body>
   <main>
-    <h1>GIAP · Churchen (Mini)</h1>
+    <h1>GIAP · Churchen</h1>
+
+    <!-- 1) Capture -->
     <div class="card">
       <h2>1) Capture Idea → Create Address</h2>
       <textarea id="idea" placeholder="Write your idea here…"></textarea>
       <div class="row">
         <button id="btn-churchen">Churchen</button>
-        <button id="btn-clear" style="background:#fff;color:#111">Clear</button>
+        <button id="btn-clear" class="secondary">Clear</button>
       </div>
       <p class="muted">Everything runs locally in your browser. No data leaves your device.</p>
     </div>
 
-    <div class="card" id="out" style="margin-top:12px;display:none">
+    <!-- 2) Result -->
+    <div class="card" id="out" style="display:none">
       <h2>Address</h2>
       <label>IdeaID</label>
       <input id="ideaId" type="text" readonly>
-      <label>Content Hash (SHA-256)</label>
+      <label style="margin-top:8px">Content Hash (SHA-256)</label>
       <input id="hash" type="text" readonly>
       <div class="row" style="justify-content:flex-end">
-        <button id="btn-copy" style="background:#fff;color:#111">Copy IdeaID</button>
+        <button id="btn-copy" class="secondary">Copy IdeaID</button>
+        <button id="btn-copy-url" class="secondary">Copy Permalink</button>
+      </div>
+      <p class="muted">Permalink: <code>?id=&lt;IdeaID&gt;</code></p>
+    </div>
+
+    <!-- 3) Local Register -->
+    <div class="card">
+      <h2>2) Local Register</h2>
+      <table id="tbl">
+        <thead><tr><th>IdeaID</th><th>Preview</th><th>Date</th><th>Action</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="row" style="justify-content:flex-end">
+        <button id="btn-export" class="secondary">Export (.json)</button>
+        <label class="secondary" style="border:1px solid #111;padding:9px 12px;border-radius:10px;background:#fff;cursor:pointer">
+          Import (.json)
+          <input type="file" id="file-import" accept="application/json" style="display:none">
+        </label>
       </div>
     </div>
   </main>
 
   <script>
+    // ===== Helpers =====
     const $ = s => document.querySelector(s);
     const today = () => new Date().toISOString().slice(0,10).replace(/-/g,'');
     async function sha256Hex(str){
       const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
       return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
     }
-    function makeId(hash){ return `giap:${today()}-${hash.slice(0,10)}` }
+    const ideaIdFrom = hash => `giap:${today()}-${hash.slice(0,10)}`;
 
+    // ===== Registry (LocalStorage) =====
+    const STORAGE_KEY = 'giap_registry_v1';
+    const readReg  = () => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); } catch { return []; } };
+    const writeReg = v  => localStorage.setItem(STORAGE_KEY, JSON.stringify(v));
+
+    function renderTable(){
+      const tbody = document.querySelector('#tbl tbody');
+      const data = readReg().sort((a,b)=>b.date - a.date);
+      tbody.innerHTML = '';
+      for (const it of data){
+        const tr = document.createElement('tr');
+
+        // IdeaID + copy/share
+        const tdId = document.createElement('td');
+        const a = document.createElement('a');
+        a.href = '?id=' + encodeURIComponent(it.id);
+        a.textContent = it.id;
+        const bCopy = document.createElement('button'); bCopy.textContent='copy'; bCopy.className='pill';
+        bCopy.onclick = async e => { e.preventDefault(); try{ await navigator.clipboard.writeText(it.id);}catch{} };
+        const bShare = document.createElement('button'); bShare.textContent='share'; bShare.className='pill';
+        bShare.onclick = async e => {
+          e.preventDefault();
+          const url = location.origin + location.pathname + '?id=' + encodeURIComponent(it.id);
+          if (navigator.share){ try{ await navigator.share({title:'GIAP Idea', text:it.id, url}); }catch{} }
+          else { try{ await navigator.clipboard.writeText(url);}catch{} }
+        };
+        tdId.appendChild(a); tdId.appendChild(document.createTextNode(' '));
+        tdId.appendChild(bCopy); tdId.appendChild(document.createTextNode(' '));
+        tdId.appendChild(bShare);
+        tr.appendChild(tdId);
+
+        // Preview
+        const tdPrev = document.createElement('td');
+        tdPrev.textContent = it.title || '(no title)';
+        tr.appendChild(tdPrev);
+
+        // Date
+        const tdDate = document.createElement('td');
+        tdDate.textContent = new Date(it.date).toLocaleString();
+        tr.appendChild(tdDate);
+
+        // Action
+        const tdAct = document.createElement('td');
+        const bLoad = document.createElement('button'); bLoad.textContent='load'; bLoad.className='pill';
+        bLoad.onclick = ()=>{ $('#idea').value = it.title || ''; window.scrollTo({top:0,behavior:'smooth'}); };
+        const bDel = document.createElement('button'); bDel.textContent='delete'; bDel.className='pill';
+        bDel.onclick = ()=>{ writeReg(readReg().filter(x=>x.id!==it.id)); renderTable(); };
+        tdAct.appendChild(bLoad); tdAct.appendChild(document.createTextNode(' ')); tdAct.appendChild(bDel);
+        tr.appendChild(tdAct);
+
+        tbody.appendChild(tr);
+      }
+    }
+
+    // ===== UI actions =====
     $('#btn-churchen').addEventListener('click', async ()=>{
       const text = ($('#idea').value || '').trim();
       if(!text){ alert('Please write your idea first.'); return; }
+
       const hash = await sha256Hex(text);
-      const id = makeId(hash);
+      const id = ideaIdFrom(hash);
       $('#hash').value = hash;
       $('#ideaId').value = id;
       $('#out').style.display = '';
+
+      // Save to registry (no duplicates)
+      const reg = readReg();
+      if (!reg.some(x => x.id === id)) {
+        reg.push({ id, title: text.slice(0,160), hash, date: Date.now() });
+        writeReg(reg);
+        renderTable();
+      }
     });
+
     $('#btn-clear').addEventListener('click', ()=>{
-      $('#idea').value = ''; $('#out').style.display='none'; $('#ideaId').value=''; $('#hash').value='';
+      $('#idea').value = '';
+      $('#out').style.display='none';
+      $('#ideaId').value=''; $('#hash').value='';
     });
+
     $('#btn-copy').addEventListener('click', async ()=>{
       try{ await navigator.clipboard.writeText($('#ideaId').value||''); }catch{}
     });
+
+    $('#btn-copy-url').addEventListener('click', async ()=>{
+      const url = location.origin + location.pathname + '?id=' + encodeURIComponent($('#ideaId').value||'');
+      try{ await navigator.clipboard.writeText(url); }catch{}
+    });
+
+    // Export / Import
+    $('#btn-export').addEventListener('click', ()=>{
+      const blob = new Blob([JSON.stringify(readReg(),null,2)], {type:'application/json'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'giap-registry.json'; a.click();
+      URL.revokeObjectURL(a.href);
+    });
+    $('#file-import').addEventListener('change', async (e)=>{
+      const f = e.target.files?.[0]; if(!f) return;
+      const text = await f.text();
+      try{
+        const arr = JSON.parse(text); if(Array.isArray(arr)) writeReg(arr);
+        renderTable();
+      }catch{}
+      e.target.value = '';
+    });
+
+    // Deep link (?id=...)
+    (function handleDeepLink(){
+      const id = new URLSearchParams(location.search).get('id'); if(!id) return;
+      const found = readReg().find(x=>x.id===id);
+      $('#ideaId').value = id;
+      $('#hash').value = found ? (found.hash||'') : '';
+      $('#out').style.display = '';
+      document.getElementById('out').scrollIntoView({behavior:'smooth'});
+    })();
+
+    // First render
+    renderTable();
   </script>
 </body>
 </html>
