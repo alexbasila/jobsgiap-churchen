@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>GIAP · Churchen Mini</title>
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;margin:0;background:#fafafa;color:#111}
+    main{max-width:820px;margin:0 auto;padding:16px}
+    h1{margin:12px 0}
+    .card{background:#fff;border:1px solid #eee;border-radius:12px;padding:16px;box-shadow:0 4px 18px rgba(0,0,0,.04)}
+    textarea{width:100%;min-height:120px;padding:12px;border:1px solid #ddd;border-radius:10px;font:inherit}
+    button{padding:10px 14px;border-radius:10px;border:1px solid #111;background:#111;color:#fff;font-weight:600;cursor:pointer}
+    .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    input[readonly]{width:100%;padding:10px;border:1px solid #ddd;border-radius:10px;font:inherit;background:#f8f8f8}
+    label{display:block;font-size:12px;color:#555;margin:8px 0 4px}
+    .muted{color:#666;font-size:13px;margin-top:8px}
+  </style>
+</head>
+<body>
+  <main>
+    <h1>GIAP · Churchen (Mini)</h1>
+    <div class="card">
+      <h2>1) Capture Idea → Create Address</h2>
+      <textarea id="idea" placeholder="Write your idea here…"></textarea>
+      <div class="row">
+        <button id="btn-churchen">Churchen</button>
+        <button id="btn-clear" style="background:#fff;color:#111">Clear</button>
+      </div>
+      <p class="muted">Everything runs locally in your browser. No data leaves your device.</p>
+    </div>
+
+    <div class="card" id="out" style="margin-top:12px;display:none">
+      <h2>Address</h2>
+      <label>IdeaID</label>
+      <input id="ideaId" type="text" readonly>
+      <label>Content Hash (SHA-256)</label>
+      <input id="hash" type="text" readonly>
+      <div class="row" style="justify-content:flex-end">
+        <button id="btn-copy" style="background:#fff;color:#111">Copy IdeaID</button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const $ = s => document.querySelector(s);
+    const today = () => new Date().toISOString().slice(0,10).replace(/-/g,'');
+    async function sha256Hex(str){
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+      return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+    }
+    function makeId(hash){ return `giap:${today()}-${hash.slice(0,10)}` }
+
+    $('#btn-churchen').addEventListener('click', async ()=>{
+      const text = ($('#idea').value || '').trim();
+      if(!text){ alert('Please write your idea first.'); return; }
+      const hash = await sha256Hex(text);
+      const id = makeId(hash);
+      $('#hash').value = hash;
+      $('#ideaId').value = id;
+      $('#out').style.display = '';
+    });
+    $('#btn-clear').addEventListener('click', ()=>{
+      $('#idea').value = ''; $('#out').style.display='none'; $('#ideaId').value=''; $('#hash').value='';
+    });
+    $('#btn-copy').addEventListener('click', async ()=>{
+      try{ await navigator.clipboard.writeText($('#ideaId').value||''); }catch{}
+    });
+  </script>
+</body>
+</html>
