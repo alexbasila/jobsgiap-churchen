@@ -27,6 +27,7 @@
     .list li{padding:8px;border-bottom:1px solid #eee}
     small.muted{color:#64748b}
     code.k{background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;padding:3px 6px}
+    #log{white-space:pre-wrap;background:#0f172a;color:#e2e8f0;padding:12px;border-radius:10px;max-height:240px;overflow:auto;margin:0}
   </style>
 </head>
 <body>
@@ -35,8 +36,8 @@
     <div class="bar">
       <div style="font-weight:800;letter-spacing:.2px">GIAP — Churchen</div>
       <div class="row" style="margin-top:0">
-        <button id="btn-install" class="secondary" title="Install to home screen" disabled>Install</button>
-        <button id="btn-check" class="secondary" title="Ping API /health">Check API</button>
+        <button class="secondary" title="Install to home screen">Install</button>
+        <button class="secondary" title="Ping API /health">Check API</button>
       </div>
     </div>
   </header>
@@ -99,11 +100,11 @@
     <!-- Log -->
     <section class="card">
       <h2>Log</h2>
-      <pre id="log" style="white-space:pre-wrap;background:#0f172a;color:#e2e8f0;padding:12px;border-radius:10px;max-height:240px;overflow:auto;margin:0"></pre>
+      <pre id="log"></pre>
     </section>
   </main>
 
-  <!-- Deine App-Logik -->
-  <script src="app.js?v=4"></script>
+  <!-- App-Logik -->
+  <script src="app.js?v=5"></script>
 </body>
 </html>
