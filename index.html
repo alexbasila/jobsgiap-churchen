@@ -105,8 +105,7 @@
  * const API_BASE = "https://giap-api.csac6316.workers.dev";
  * Wenn du die Datei aus dem gleichen Host bedienst wie den Worker (Reverse Proxy), lass es auf "".
 */
-const API_BASE = "https://YOUR-WORKER-SUBDOMAIN.workers.dev"; // <--- HIER EINTRAGEN
-
+const API_BASE = "https://giap-api.csac6316.workers.dev";
 /* ====== UI Helpers ====== */
 const $  = s => document.querySelector(s);
 const log = (...a)=>{ const el=$("#log"); el.textContent += a.map(x=>typeof x==="string"?x:JSON.stringify(x,null,2)).join(" ")+"\n"; el.scrollTop=el.scrollHeight; };
