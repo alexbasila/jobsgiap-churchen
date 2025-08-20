@@ -104,6 +104,24 @@
     </section>
   </main>
 
+  <script>
+  // Kill any old Service Workers + caches from previous builds
+  (async () => {
+    try {
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        for (const r of regs) { await r.unregister(); }
+      }
+      if (window.caches) {
+        const keys = await caches.keys();
+        for (const k of keys) { await caches.delete(k); }
+      }
+      // optisch: zeigt an, dass die neue Datei wirklich geladen ist
+      document.body.setAttribute('data-appjs', 'v5');
+    } catch (e) {}
+  })();
+</script>
+
   <!-- App-Logik -->
   <script src="app.js?v=5"></script>
 </body>
