@@ -1,263 +1,109 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>GIAP · Churchen</title>
-<meta name="theme-color" content="#0f172a" />
-<style>
-  :root{--w:940px}
-  *{box-sizing:border-box}
-  body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;margin:0;background:#fafafa;color:#0f172a}
-  header{background:#0f172a;color:#fff}
-  .bar{max-width:var(--w);margin:0 auto;padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
-  main{max-width:var(--w);margin:0 auto;padding:16px}
-  .card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:16px;margin:12px 0;box-shadow:0 6px 20px rgba(0,0,0,.05)}
-  h1{margin:6px 0 0;font-size:26px}
-  h2{margin:0 0 8px}
-  .lead{color:#475569;margin:6px 0 2px}
-  textarea{width:100%;min-height:140px;padding:12px;border:1px solid #cbd5e1;border-radius:12px;font:inherit}
-  input[type=text]{width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:12px;font:inherit}
-  input[readonly]{background:#f8fafc}
-  .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-  button{padding:10px 14px;border-radius:12px;border:1px solid #0f172a;background:#0f172a;color:#fff;font-weight:700;cursor:pointer}
-  button.secondary{background:#fff;color:#0f172a}
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .list{list-style:none;margin:0;padding:0}
-  .list li{padding:8px;border-bottom:1px solid #eee}
-  small.muted{color:#64748b}
-  code.k{background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;padding:3px 6px}
-  .ok{color:#16a34a;font-weight:700}
-  .bad{color:#b91c1c;font-weight:700}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>GIAP · Churchen</title>
+  <meta name="theme-color" content="#0f172a" />
+  <style>
+    :root{--w:940px}
+    *{box-sizing:border-box}
+    body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;margin:0;background:#fafafa;color:#0f172a}
+    header{background:#0f172a;color:#fff}
+    .bar{max-width:var(--w);margin:0 auto;padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+    main{max-width:var(--w);margin:0 auto;padding:16px}
+    .card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:16px;margin:12px 0;box-shadow:0 6px 20px rgba(0,0,0,.05)}
+    h1{margin:6px 0 0;font-size:26px}
+    h2{margin:0 0 8px}
+    .lead{color:#475569;margin:6px 0 2px}
+    textarea{width:100%;min-height:140px;padding:12px;border:1px solid #cbd5e1;border-radius:12px;font:inherit}
+    input[type=text]{width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:12px;font:inherit}
+    input[readonly]{background:#f8fafc}
+    .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    button{padding:10px 14px;border-radius:12px;border:1px solid #0f172a;background:#0f172a;color:#fff;font-weight:700;cursor:pointer}
+    button.secondary{background:#fff;color:#0f172a}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .list{list-style:none;margin:0;padding:0}
+    .list li{padding:8px;border-bottom:1px solid #eee}
+    small.muted{color:#64748b}
+    code.k{background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;padding:3px 6px}
+  </style>
 </head>
 <body>
-<header>
-  <div class="bar">
-    <div style="font-weight:800;letter-spacing:.2px">GIAP — Churchen</div>
-    <div class="row">
-      <button id="btn-install" class="secondary" title="Install to home screen">Install</button>
-      <button id="btn-check" class="secondary" title="Ping API /health">Check API</button>
-    </div>
-  </div>
-</header>
 
-<main>
-  <!-- Capture -->
-  <section class="card">
-    <h1>Every Idea. One Click. Global Reach.</h1>
-    <p class="lead">Schreibe deine Idee, erhalte sofort eine Adresse & sieh ähnliche Ideen.</p>
-  </section>
-
-  <section class="card">
-    <h2>1) Capture → Churchen</h2>
-    <textarea id="idea" placeholder="Write your idea here…"></textarea>
-    <input id="tags" type="text" placeholder="(optional) tags, comma-separated e.g. water, solar, protocol" />
-    <div class="row">
-      <button id="btn-churchen">Churchen (ID + Matches)</button>
-      <button id="btn-clear" class="secondary">Clear</button>
-    </div>
-    <small class="muted">Hinweis: Der Text wird an deine GIAP-API geschickt (siehe API_BASE unten).</small>
-  </section>
-
-  <!-- Output -->
-  <section class="card" id="out" style="display:none">
-    <h2>2) Ergebnis</h2>
-    <div class="grid">
-      <div>
-        <label>IdeaID</label>
-        <input id="ideaId" type="text" readonly />
-      </div>
-      <div>
-        <label>Content Hash (SHA-256)</label>
-        <input id="hash" type="text" readonly />
+  <header>
+    <div class="bar">
+      <div style="font-weight:800;letter-spacing:.2px">GIAP — Churchen</div>
+      <div class="row" style="margin-top:0">
+        <button id="btn-install" class="secondary" title="Install to home screen" disabled>Install</button>
+        <button id="btn-check" class="secondary" title="Ping API /health">Check API</button>
       </div>
     </div>
-    <div style="margin-top:10px">
-      <h3 style="margin:0 0 6px">Matches</h3>
-      <ul id="matches" class="list"></ul>
-    </div>
+  </header>
 
+  <main>
+    <!-- Intro -->
+    <section class="card">
+      <h1>Every Idea. One Click. Global Reach.</h1>
+      <p class="lead">Schreibe deine Idee, erhalte sofort eine Adresse & sieh ähnliche Ideen.</p>
+    </section>
 
-<div class="row" style="margin-top:10px">
-  <button id="btn-publish">Publish (ins Registry)</button>
-  <button id="btn-copy-ideal" class="secondary">Copy IdeaID</button>
-  <!-- NEU: öffnet die öffentliche JSON-Ansicht -->
-  <button id="btn-open-json" class="secondary" style="display:none">Open public JSON</button>
-</div>
+    <!-- 1) Capture -->
+    <section class="card">
+      <h2>1) Capture → Churchen</h2>
+      <textarea id="idea" placeholder="Write your idea here…"></textarea>
+      <input id="tags" type="text" placeholder="(optional) tags, comma-separated e.g. water, solar, protocol" />
+      <div class="row">
+        <button id="btn-churchen">Churchen (ID + Matches)</button>
+        <button id="btn-clear" class="secondary">Clear</button>
+      </div>
+      <small class="muted">Hinweis: Der Text wird an deine GIAP-API geschickt (siehe <code class="k">API_BASE</code> in <code class="k">app.js</code>).</small>
+    </section>
 
+    <!-- 2) Ergebnis -->
+    <section class="card" id="out" style="display:none">
+      <h2>2) Ergebnis</h2>
+      <div class="grid">
+        <div>
+          <label>IdeaID</label>
+          <input id="ideaId" type="text" readonly />
+        </div>
+        <div>
+          <label>Content Hash (SHA-256)</label>
+          <input id="hash" type="text" readonly />
+        </div>
+      </div>
 
-    
-  </section>
+      <div style="margin-top:10px">
+        <h3 style="margin:0 0 6px">Matches</h3>
+        <ul id="matches" class="list"></ul>
+      </div>
 
-  <!-- Feed -->
-  <section class="card">
-    <h2>3) Feed (Neueste)</h2>
-    <div class="row">
-      <button id="btn-feed" class="secondary">Load feed</button>
-    </div>
-    <ul id="feed" class="list"></ul>
-  </section>
+      <div class="row" style="margin-top:10px">
+        <button id="btn-publish">Publish (ins Registry)</button>
+        <button id="btn-copy-ideal" class="secondary">Copy IdeaID</button>
+        <!-- wird von app.js erst NACH Publish eingeblendet -->
+        <button id="btn-open-json" class="secondary" style="display:none">Open public JSON</button>
+      </div>
+    </section>
 
-  <!-- Log -->
-  <section class="card">
-    <h2>Log</h2>
-    <pre id="log" style="white-space:pre-wrap;background:#0f172a;color:#e2e8f0;padding:12px;border-radius:10px;max-height:240px;overflow:auto;margin:0"></pre>
-  </section>
-</main>
+    <!-- 3) Feed -->
+    <section class="card">
+      <h2>3) Feed (Neueste)</h2>
+      <div class="row">
+        <button id="btn-feed" class="secondary">Load feed</button>
+      </div>
+      <ul id="feed" class="list"></ul>
+    </section>
 
-<script>
-/* ====== CONFIG ======
- * Stelle HIER deine Worker-URL ein. Beispiel:
- * const API_BASE = "https://giap-api.csac6316.workers.dev";
- * Wenn du die Datei aus dem gleichen Host bedienst wie den Worker (Reverse Proxy), lass es auf "".
-*/
-const API_BASE = "https://giap-api.csac6316.workers.dev";
-/* ====== UI Helpers ====== */
-const $  = s => document.querySelector(s);
-const log = (...a)=>{ const el=$("#log"); el.textContent += a.map(x=>typeof x==="string"?x:JSON.stringify(x,null,2)).join(" ")+"\n"; el.scrollTop=el.scrollHeight; };
-function asTags(s){ return (s||"").split(",").map(t=>t.trim()).filter(Boolean); }
-function api(path, opt={}){
-  const url = (API_BASE||"") + path;
-  return fetch(url, Object.assign({ headers:{ "Content-Type":"application/json" } }, opt));
-}
-function renderMatches(list){
-  const ul = $("#matches"); ul.innerHTML = "";
-  (list||[]).forEach(m=>{
-    const li = document.createElement("li");
-    li.innerHTML = `<b>${m.who||"—"}</b> — ${m.title||""}
-      <br><small class="muted">${(m.tags||[]).join(", ")}</small>
-      <br><small>src: ${m.source||"?"}, score: ${m.score}</small>`;
-    ul.appendChild(li);
-  });
-}
-function renderFeed(items){
-  const ul = $("#feed"); ul.innerHTML = "";
-  (items||[]).forEach(it=>{
-    const li = document.createElement("li");
-    const when = it.createdAt ? new Date(it.createdAt).toLocaleString() : "(demo)";
-    li.innerHTML = `<b>${it.id||it.who||"—"}</b><br>${(it.text||it.abstract||"").slice(0,180)}
-      <br><small class="muted">${when}</small>`;
-    ul.appendChild(li);
-  });
-}
+    <!-- Log -->
+    <section class="card">
+      <h2>Log</h2>
+      <pre id="log" style="white-space:pre-wrap;background:#0f172a;color:#e2e8f0;padding:12px;border-radius:10px;max-height:240px;overflow:auto;margin:0"></pre>
+    </section>
+  </main>
 
-/* ====== Actions ====== */
-let lastIdea = null; // { ideaId, hash, text, tags }
-
-$("#btn-check").onclick = async ()=>{
-  try{
-    const r = await api("/health");
-    const j = await r.json();
-    if (j && j.ok) log("Health:", j), alert("API OK ✅");
-    else alert("API antwortet, aber nicht ok.");
-  }catch(e){ alert("API nicht erreichbar ❌"); log("Health error:", e.message||e); }
-};
-
-$("#btn-churchen").onclick = async ()=>{
-  const text = ($("#idea").value||"").trim();
-  const tags = asTags($("#tags").value);
-  if (!text) { alert("Bitte zuerst eine Idee schreiben."); return; }
-  try{
-    const r = await api("/api/churchen",{ method:"POST", body: JSON.stringify({ text, tags }) });
-    const j = await r.json();
-    if (!r.ok) throw new Error(j && j.error || "churchen failed");
-    $("#ideaId").value = j.ideaId; $("#hash").value = j.hash; $("#out").style.display = "";
-    renderMatches(j.matches||[]);
-    lastIdea = { ideaId: j.ideaId, hash: j.hash, text, tags };
-    log("Churchen ✓", j);
-    window.scrollTo({ top: document.body.scrollHeight, behavior:"smooth" });
-  }catch(e){ log("Churchen error:", e.message||e); alert("Churchen fehlgeschlagen."); }
-};
-
-$("#btn-publish").onclick = async ()=>{
-  if (!lastIdea || !lastIdea.ideaId){ alert("Bitte zuerst Churchen durchführen."); return; }
-  try{
-    const r = await api("/api/publish", { method:"POST", body: JSON.stringify({
-      ideaId: lastIdea.ideaId, text: lastIdea.text, tags: lastIdea.tags, abstract: lastIdea.text.slice(0,180)
-    })});
-    const j = await r.json();
-    if (!r.ok) throw new Error(j && j.error || "publish failed");
-    log("Publish ✓", j);
-    alert("Veröffentlicht! ✅");
-  }catch(e){ log("Publish error:", e.message||e); alert("Publish fehlgeschlagen."); }
-};
-
-$("#btn-feed").onclick = async ()=>{
-  try{
-    const r = await api("/api/feed");
-    const j = await r.json();
-    renderFeed(j.items||[]);
-    log("Feed ✓", (j.items||[]).length+" items");
-  }catch(e){ log("Feed error:", e.message||e); }
-};
-
-$("#btn-clear").onclick = ()=>{
-  $("#idea").value = ""; $("#tags").value = ""; $("#out").style.display = "none";
-  $("#ideaId").value=""; $("#hash").value=""; $("#matches").innerHTML="";
-};
-
-$("#btn-copy").onclick = async ()=>{
-  try{ await navigator.clipboard.writeText($("#ideaId").value||""); }catch{}
-};
-
-/* ====== Single-file PWA (Manifest + Service Worker via Blob) ====== */
-(function setupPWA(){
-  // Manifest aus Blob einhängen
-  const manifest = {
-    name: "GIAP · Churchen",
-    short_name: "GIAP",
-    start_url: ".",
-    display: "standalone",
-    background_color: "#0f172a",
-    theme_color: "#0f172a",
-    icons: []
-  };
-  const manBlob = new Blob([JSON.stringify(manifest)], {type:"application/manifest+json"});
-  const manUrl  = URL.createObjectURL(manBlob);
-  const link = document.createElement("link"); link.rel="manifest"; link.href=manUrl; document.head.appendChild(link);
-
-  // Service Worker Code (App-Shell Cache)
-  const swCode = `
-    const CACHE = "giap-shell-v1";
-    const ASSETS = [ "/", location.pathname, location.href ];
-    self.addEventListener("install", e=>{
-      e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()));
-    });
-    self.addEventListener("activate", e=>{
-      e.waitUntil(caches.keys().then(keys=>Promise.all(keys.map(k=>k===CACHE?null:caches.delete(k)))));
-      self.clients.claim();
-    });
-    self.addEventListener("fetch", e=>{
-      const req = e.request;
-      if (req.method !== "GET") return;
-      e.respondWith(
-        caches.match(req).then(hit => hit || fetch(req).then(res=>{
-          const copy = res.clone();
-          caches.open(CACHE).then(c=>c.put(req, copy)).catch(()=>{});
-          return res;
-        }).catch(()=>hit))
-      );
-    });
-  `;
-  const swUrl = URL.createObjectURL(new Blob([swCode], {type:"text/javascript"}));
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register(swUrl).catch(()=>{});
-  }
-
-  // „Install“-Button
-  let deferredPrompt = null;
-  window.addEventListener("beforeinstallprompt", (e)=>{
-    e.preventDefault(); deferredPrompt = e; $("#btn-install").disabled = false;
-  });
-  $("#btn-install").onclick = async ()=>{
-    if (!deferredPrompt) { alert("Schon installiert oder nicht verfügbar."); return; }
-    deferredPrompt.prompt(); deferredPrompt = null;
-  };
-})();
-</script>
-
-<script src="app.js?v=3"></script>
-  
+  <!-- Deine App-Logik -->
+  <script src="app.js?v=4"></script>
 </body>
 </html>
