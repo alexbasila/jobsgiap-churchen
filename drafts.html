@@ -108,13 +108,14 @@
   <script>
   (function(){
     'use strict';
-    // ========= KONFIG =========
-    const API_BASE = 'https://giap-api.csac6316.workers.dev'; // ggf. anpassen
+
+    // ========= ENDPOINT: nur der Drafts-Worker =========
+    const DRAFTS_API = 'https://giap-drafts.csac6316.workers.dev';
 
     // ========= MINI-UTILS =========
     const $ = sel => document.querySelector(sel);
     const qs = new URLSearchParams(location.search);
-    const hash = qs.get('hash') || '';
+    const hash = (qs.get('hash') || '').trim();
     const escape = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     const log = (t,o) => { const pre = $('#log'); pre.textContent = (t? t+'\n':'') + (o? JSON.stringify(o,null,2):'') + '\n\n' + pre.textContent; };
     const setNotice = (msg, ok=false) => { const n=$('#notice'); if(!msg){n.style.display='none'; n.textContent=''; return;} n.className = ok?'ok':'alert'; n.textContent = msg; n.style.display='block'; };
@@ -136,16 +137,14 @@
 
     // ========= STATUS / PROGRESS =========
     function paintStatus(d){
-      const s = (d.status||'review');
+      const s = (d.status|| (d.verdict==='pass' ? 'pass' : 'review'));
       const ex = Number(d.exchanges||0);
-      // Dots sichtbar schalten
       $('#st-review').style.opacity = (['review','pass','payment_required','paid','finalized'].includes(s))?1:.35;
       $('#st-pass').style.opacity   = (['pass','payment_required','paid','finalized'].includes(s))?1:.35;
       $('#st-pay').style.opacity    = (['payment_required','paid','finalized'].includes(s))?1:.35;
       $('#st-paid').style.opacity   = (['paid','finalized'].includes(s))?1:.35;
       $('#st-final').style.opacity  = (s==='finalized')?1:.35;
 
-      // Fortschrittsbreite
       let w = 10;
       if (s==='review') w = Math.min(40, 10 + ex*10);
       if (s==='pass') w = 60;
@@ -154,7 +153,6 @@
       if (s==='finalized') w = 100;
       ui.bar.style.width = w + '%';
 
-      // Buttons
       ui.pay.style.display = (s==='payment_required') ? '' : 'none';
       ui.finalize.style.display = (s==='paid' || (s==='pass' && d.paid)) ? '' : 'none';
     }
@@ -190,23 +188,20 @@
       paintStatus(d);
     }
 
-    // ========= API =========
+    // ========= API (alle Calls → DRAFTS_API) =========
     async function apiGetDraft(){
-      const r = await fetch(`${API_BASE}/drafts/${encodeURIComponent(hash)}`, { cache:'no-store' });
-      const ct = (r.headers.get('content-type')||'').toLowerCase();
+      const r = await fetch(`${DRAFTS_API}/drafts/${encodeURIComponent(hash)}`, { cache:'no-store' });
       let j = {};
       try { j = await r.json(); } catch {}
       if (r.ok && j?.ok) return j.draft;
-      // Hilfreiche Meldung, falls GET-Route noch nicht existiert
       if (!r.ok && (j?.error==='not_found' || j?.error==='draft_not_found' || r.status===404)){
-        throw new Error('Draft nicht gefunden (prüfe, ob /drafts/:hash im Worker implementiert ist und der Hash korrekt aus /drafts/submit stammt).');
+        throw new Error('Draft nicht gefunden (stammt der Hash aus /drafts/ingest oder /drafts/submit?).');
       }
-      if (!ct.includes('application/json')) throw new Error(`Unerwartete Antwort (${r.status}).`);
       throw new Error(j?.error || `HTTP ${r.status}`);
     }
 
     async function apiIterate(userText){
-      const r = await fetch(`${API_BASE}/drafts/iterate`, {
+      const r = await fetch(`${DRAFTS_API}/drafts/iterate`, {
         method:'POST',
         headers:{'content-type':'application/json'},
         body: JSON.stringify({ hash, user_text: userText||'' })
@@ -216,7 +211,7 @@
         ui.pay.dataset.url = j.checkout_url || '';
         ui.pay.style.display = '';
         paintStatus(j.draft || {status:'payment_required'});
-        setNotice('Zahlung erforderlich, um weiter zu iterieren.', false);
+        setNotice('Zahlung erforderlich, um weiter zu iterieren.');
         log('payment_required', j);
         throw new Error('payment_required');
       }
@@ -226,7 +221,7 @@
     }
 
     async function apiCheckout(){
-      const r = await fetch(`${API_BASE}/drafts/checkout`, {
+      const r = await fetch(`${DRAFTS_API}/drafts/checkout`, {
         method:'POST',
         headers:{'content-type':'application/json'},
         body: JSON.stringify({ hash })
@@ -237,7 +232,7 @@
     }
 
     async function apiFinalize(){
-      const r = await fetch(`${API_BASE}/drafts/finalize`, {
+      const r = await fetch(`${DRAFTS_API}/drafts/finalize`, {
         method:'POST',
         headers:{'content-type':'application/json'},
         body: JSON.stringify({ hash })
@@ -261,7 +256,7 @@
 
     $('#btn-iterate').onclick = async ()=>{
       const txt = ui.userText.value.trim();
-      if (!txt){ setNotice('Bitte Text eingeben.', false); return; }
+      if (!txt){ setNotice('Bitte Text eingeben.'); return; }
       ui.iterate.disabled = true;
       try{
         setNotice('');
@@ -281,14 +276,12 @@
     $('#btn-pay').onclick = async ()=>{
       try{
         setNotice('');
-        // Falls der Worker bereits checkout_url geliefert hat, nutzen:
         const existing = ui.pay.dataset.url || '';
         if (existing){ window.open(existing, '_blank', 'noopener'); return; }
-        // Sonst Checkout anfordern:
         const url = await apiCheckout();
         ui.pay.dataset.url = url || '';
         if (url) window.open(url, '_blank', 'noopener');
-        else setNotice('Checkout-URL nicht verfügbar.', false);
+        else setNotice('Checkout-URL nicht verfügbar.');
       }catch(e){
         setNotice('Bezahlvorgang fehlgeschlagen: ' + (e.message||e));
         log('checkout_error', {err:String(e)});
@@ -312,7 +305,7 @@
     // ========= INIT =========
     (async function init(){
       if (!hash){
-        setNotice('Kein Draft-Hash in der URL gefunden. Öffne diese Seite als: drafts.html?hash=<DRAFT_HASH>.', false);
+        setNotice('Kein Draft-Hash in der URL gefunden. Öffne diese Seite als: drafts.html?hash=<DRAFT_HASH>.');
         return;
       }
       try{
