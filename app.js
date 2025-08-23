@@ -1,8 +1,8 @@
-// app.js — V6 (AI-Status, Force-GPT, robuste JSON-Viewer)
+// app.js — V7 (AI-Status, Keywords, Force-GPT)
 "use strict";
 
 // === Konfiguration ===
-const API_BASE = "https://giap-api.csac6316.workers.dev"; // <- Worker-Domain
+const API_BASE = "https://giap-api.csac6316.workers.dev"; // Worker-Domain
 
 // === Mini-Utils ===
 const $ = (sel) => document.querySelector(sel);
@@ -30,7 +30,7 @@ function logBlock(title, obj) {
 
 function toast(msg) { try { alert(msg); } catch {} }
 
-// Öffne öffentliche JSON (mehrere Kandidaten-URLs + Fallback)
+// === Öffne öffentliche JSON (mehrere Kandidaten + Fallback) ===
 async function openPublicJsonById(ideaId, { text = "", tags = [] } = {}, allowFallback = false) {
   if (!ideaId) { toast("Keine IdeaID übergeben."); return; }
 
@@ -146,7 +146,6 @@ function renderFeed(items = []) {
 
 // === Verkabeln NACH DOM-Ready ===
 document.addEventListener("DOMContentLoaded", () => {
-  // Elemente
   const taIdea       = $("#idea");
   const inpTags      = $("#tags");
   const outId        = $("#ideaId");
@@ -160,19 +159,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const chkForceGPT  = $("#force-gpt");
   const aiStatus     = $("#ai-status");
 
-  // Header-Buttons
-  function findButtonByText(label) {
-    const btns = document.querySelectorAll("button, a[role='button']");
-    for (const el of btns) {
-      const t = (el.textContent || "").trim().toLowerCase();
-      if (t === label.toLowerCase()) return el;
-    }
-    return null;
-  }
-  const checkBtn   = findButtonByText("check api");
-  const installBtn = findButtonByText("install");
-
-  // 0) API Health
+  // 0) Health
+  const checkBtn = document.querySelector("button[title='Ping API /health']");
   if (checkBtn) {
     checkBtn.addEventListener("click", async () => {
       setBusy(checkBtn, true, "Checking…");
@@ -193,8 +181,10 @@ document.addEventListener("DOMContentLoaded", () => {
   if (btnChurchen) {
     btnChurchen.addEventListener("click", async () => {
       const text = (taIdea?.value || "").trim();
-      const tags = (inpTags?.value || "").split(",").map(t => t.trim()).filter(Boolean);
+      let tags = (inpTags?.value || "").split(",").map(t => t.trim()).filter(Boolean);
       if (chkForceGPT?.checked) tags.push("force:heritage");
+      const keywords = tags.filter(t => !t.includes(':')).slice(0,8);
+
       if (!text) { toast("Bitte zuerst eine Idee eingeben."); return; }
 
       setBusy(btnChurchen, true, "Churchen…");
@@ -203,7 +193,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const r = await fetch(`${API_BASE}/api/churchen`, {
           method: "POST",
           headers: { "Content-Type": "application/json", "Accept":"application/json" },
-          body: JSON.stringify({ text, tags })
+          body: JSON.stringify({ text, tags, keywords })
         });
         const data = await r.json();
         if (!r.ok) { toast("Fehler: " + (data?.error || r.status)); return; }
@@ -211,16 +201,14 @@ document.addEventListener("DOMContentLoaded", () => {
         LAST_CHURCHEN = { ideaId: data.ideaId, hash: data.hash, text, tags, matches: data.matches || [] };
         if (outId)   outId.value   = data.ideaId || "";
         if (outHash) outHash.value = data.hash   || "";
-        $("#out").style.display = "";   // Ergebnis zeigen
+        $("#out").style.display = "";
         renderMatches(data.matches || []);
         logBlock("Churchen", data);
 
-        // AI-Status anzeigen
         if (data.ai) {
-          const msg = data.ai.used
+          aiStatus.textContent = data.ai.used
             ? `AI used (${data.ai.model || "?"}) · proposed=${data.ai.proposed ?? "-"} · saved=${data.ai.saved ?? "-"}`
             : (data.ai.error ? `AI error: ${data.ai.error}` : "AI not used");
-          aiStatus.textContent = msg;
         } else {
           aiStatus.textContent = "AI status: n/a";
         }
@@ -275,7 +263,7 @@ document.addEventListener("DOMContentLoaded", () => {
         toast("Veröffentlicht! ✅");
 
         LAST_PUBLISHED_ID = data.idea?.id || LAST_CHURCHEN.ideaId;
-        if (btnOpenJson) btnOpenJson.style.display = ""; // jetzt sichtbar
+        if (btnOpenJson) btnOpenJson.style.display = "";
       } catch (e) {
         toast("Netzwerkfehler: " + e.message);
       } finally {
@@ -284,7 +272,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // 4) Copy IdeaID
+  // 4) Copy ID
   if (btnCopyId) {
     btnCopyId.addEventListener("click", async () => {
       const val = outId?.value || LAST_CHURCHEN?.ideaId || "";
@@ -294,9 +282,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // 5) Öffentliche JSON (für aktuelle Idee)
+  // 5) JSON öffnen
   if (btnOpenJson) {
-    btnOpenJson.style.display = "none"; // erst nach Publish
+    btnOpenJson.style.display = "none";
     btnOpenJson.addEventListener("click", () => {
       const ideaId = (outId.value || LAST_PUBLISHED_ID || "").trim();
       openPublicJsonById(ideaId, { text: LAST_CHURCHEN?.text || "", tags: LAST_CHURCHEN?.tags || [] }, true);
@@ -317,13 +305,6 @@ document.addEventListener("DOMContentLoaded", () => {
       } finally {
         setBusy(btnFeed, false);
       }
-    });
-  }
-
-  // 7) Install (Stub)
-  if (installBtn) {
-    installBtn.addEventListener("click", () => {
-      toast("PWA-Install kommt im nächsten Schritt (manifest + sw.js).");
     });
   }
 });
