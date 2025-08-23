@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -28,8 +28,6 @@
     small.muted{color:#64748b}
     code.k{background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;padding:3px 6px}
     #log{white-space:pre-wrap;background:#0f172a;color:#e2e8f0;padding:12px;border-radius:10px;max-height:240px;overflow:auto;margin:0}
-    #ai-status{color:#334155;margin-top:8px;font-size:12px}
-    label.chk{display:inline-flex;align-items:center;gap:8px;margin-top:8px}
   </style>
 </head>
 <body>
@@ -56,7 +54,10 @@
       <h2>1) Capture → Churchen</h2>
       <textarea id="idea" placeholder="Write your idea here…"></textarea>
       <input id="tags" type="text" placeholder="(optional) tags, comma-separated e.g. water, solar, protocol" />
-      <label class="chk"><input type="checkbox" id="force-gpt" /> GPT-Heritage forcieren</label>
+      <label style="display:flex;align-items:center;gap:6px;margin-top:8px">
+        <input id="force-gpt" type="checkbox" />
+        <span>Always use GPT heritage (debug)</span>
+      </label>
       <div class="row">
         <button id="btn-churchen">Churchen (ID + Matches)</button>
         <button id="btn-clear" class="secondary">Clear</button>
@@ -78,11 +79,13 @@
         </div>
       </div>
 
-      <div id="ai-status"></div>
-
       <div style="margin-top:10px">
-        <h3 style="margin:0 0 6px">Matches</h3>
+        <h3 style="margin:0 0 6px">Matches
+       </h3>
         <ul id="matches" class="list"></ul>
+        <div style="margin-top:8px">
+          <small id="ai-status" class="muted">AI status: n/a</small>
+        </div>
       </div>
 
       <div class="row" style="margin-top:10px">
@@ -109,22 +112,24 @@
   </main>
 
   <script>
-  // Service Worker / Cache kill (falls mal was altes hängt)
-  (async () => {
-    try {
-      if ('serviceWorker' in navigator) {
-        const regs = await navigator.serviceWorker.getRegistrations();
-        for (const r of regs) { await r.unregister(); }
-      }
-      if (window.caches) {
-        const keys = await caches.keys();
-        for (const k of keys) { await caches.delete(k); }
-      }
-      document.body.setAttribute('data-appjs', 'v6');
-    } catch (e) {}
-  })();
+    // Kill any old Service Workers + caches from previous builds
+    (async () => {
+      try {
+        if ('serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          for (const r of regs) { await r.unregister(); }
+        }
+        if (window.caches) {
+          const keys = await caches.keys();
+          for (const k of keys) { await caches.delete(k); }
+        }
+        // optisch: Flag damit du siehst, dass die neue Datei geladen ist
+        document.body.setAttribute('data-appjs', 'v7');
+      } catch (e) {}
+    })();
   </script>
 
-  <script src="app.js?v=6"></script>
+  <!-- App-Logik -->
+  <script src="app.js?v=7"></script>
 </body>
-</html>
+</html>   
