@@ -1,29 +1,36 @@
-// app.js — V5 (DOM-sicher, JSON-Buttons in Matches & Feed, robuster Open-JSON)
+// app.js — V6 (AI-Status, Force-GPT, robuste JSON-Viewer)
 "use strict";
 
 // === Konfiguration ===
-const API_BASE = "https://giap-api.csac6316.workers.dev";
+const API_BASE = "https://giap-api.csac6316.workers.dev"; // <- Worker-Domain
 
 // === Mini-Utils ===
 const $ = (sel) => document.querySelector(sel);
 const escapeHtml = (s = "") =>
-  String(s)
-    .replaceAll("&", "&amp;").replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+  String(s).replaceAll("&", "&amp;").replaceAll("<", "&lt;")
+           .replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+
 function setBusy(btn, busy, labelWhenBusy = "…") {
   if (!btn) return;
   btn.disabled = !!busy;
-  if (busy) { btn.dataset.__label = btn.textContent; btn.textContent = labelWhenBusy; }
-  else if (btn.dataset.__label) { btn.textContent = btn.dataset.__label; delete btn.dataset.__label; }
+  if (busy) {
+    btn.dataset.__label = btn.textContent;
+    btn.textContent = labelWhenBusy;
+  } else if (btn.dataset.__label) {
+    btn.textContent = btn.dataset.__label;
+    delete btn.dataset.__label;
+  }
 }
+
 function logBlock(title, obj) {
   const pre = $("#log"); if (!pre) return;
   let txt = ""; try { txt = JSON.stringify(obj, null, 2); } catch { txt = String(obj); }
   pre.textContent = `${title ? title + " ✓ " : ""}{\n${txt}\n}\n\n` + pre.textContent;
 }
+
 function toast(msg) { try { alert(msg); } catch {} }
 
-// Öffne öffentliche JSON (mit optionalem Fallback, wenn wir Text/Tags lokal haben)
+// Öffne öffentliche JSON (mehrere Kandidaten-URLs + Fallback)
 async function openPublicJsonById(ideaId, { text = "", tags = [] } = {}, allowFallback = false) {
   if (!ideaId) { toast("Keine IdeaID übergeben."); return; }
 
@@ -45,12 +52,11 @@ async function openPublicJsonById(ideaId, { text = "", tags = [] } = {}, allowFa
         window.open(href, "_blank", "noopener");
         return;
       }
-    } catch (_) { /* next candidate */ }
+    } catch (_) {}
   }
 
   if (allowFallback) {
-    const fallback = { id: ideaId, text, tags, source: "local-fallback" };
-    const pretty = JSON.stringify(fallback, null, 2);
+    const pretty = JSON.stringify({ id: ideaId, text, tags, source: "local-fallback" }, null, 2);
     const blob = new Blob([pretty], { type: "application/json" });
     window.open(URL.createObjectURL(blob), "_blank", "noopener");
   } else {
@@ -151,6 +157,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnCopyId    = $("#btn-copy-ideal");
   const btnOpenJson  = $("#btn-open-json");
   const btnFeed      = $("#btn-feed");
+  const chkForceGPT  = $("#force-gpt");
+  const aiStatus     = $("#ai-status");
 
   // Header-Buttons
   function findButtonByText(label) {
@@ -186,13 +194,15 @@ document.addEventListener("DOMContentLoaded", () => {
     btnChurchen.addEventListener("click", async () => {
       const text = (taIdea?.value || "").trim();
       const tags = (inpTags?.value || "").split(",").map(t => t.trim()).filter(Boolean);
+      if (chkForceGPT?.checked) tags.push("force:heritage");
       if (!text) { toast("Bitte zuerst eine Idee eingeben."); return; }
 
       setBusy(btnChurchen, true, "Churchen…");
+      aiStatus.textContent = "";
       try {
         const r = await fetch(`${API_BASE}/api/churchen`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", "Accept":"application/json" },
           body: JSON.stringify({ text, tags })
         });
         const data = await r.json();
@@ -204,6 +214,16 @@ document.addEventListener("DOMContentLoaded", () => {
         $("#out").style.display = "";   // Ergebnis zeigen
         renderMatches(data.matches || []);
         logBlock("Churchen", data);
+
+        // AI-Status anzeigen
+        if (data.ai) {
+          const msg = data.ai.used
+            ? `AI used (${data.ai.model || "?"}) · proposed=${data.ai.proposed ?? "-"} · saved=${data.ai.saved ?? "-"}`
+            : (data.ai.error ? `AI error: ${data.ai.error}` : "AI not used");
+          aiStatus.textContent = msg;
+        } else {
+          aiStatus.textContent = "AI status: n/a";
+        }
 
         LAST_PUBLISHED_ID = null;
         if (btnOpenJson) btnOpenJson.style.display = "none";
@@ -224,6 +244,7 @@ document.addEventListener("DOMContentLoaded", () => {
       outHash.value = "";
       $("#out").style.display = "none";
       $("#matches").innerHTML = "";
+      aiStatus.textContent = "";
       LAST_CHURCHEN = null;
       LAST_PUBLISHED_ID = null;
       if (btnOpenJson) btnOpenJson.style.display = "none";
@@ -283,9 +304,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // 6) Feed
-  if ($("#btn-feed")) {
-    $("#btn-feed").addEventListener("click", async () => {
-      setBusy($("#btn-feed"), true, "Loading…");
+  if (btnFeed) {
+    btnFeed.addEventListener("click", async () => {
+      setBusy(btnFeed, true, "Loading…");
       try {
         const r = await fetch(`${API_BASE}/api/feed?limit=20`, { cache: "no-store" });
         const data = await r.json();
@@ -294,7 +315,7 @@ document.addEventListener("DOMContentLoaded", () => {
       } catch (e) {
         toast("Fehler beim Laden des Feeds: " + e.message);
       } finally {
-        setBusy($("#btn-feed"), false);
+        setBusy(btnFeed, false);
       }
     });
   }
