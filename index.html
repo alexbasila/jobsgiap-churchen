@@ -3,114 +3,156 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>GIAP – Churchen</title>
-  <meta name="color-scheme" content="light dark" />
+  <title>GIAP — Churchen</title>
+  <meta name="theme-color" content="#0f172a" />
   <style>
     :root{
-      --bg:#f8fafc; --panel:#ffffff; --ink:#0f172a; --muted:#64748b; --border:#e5e7eb;
-      --brand:#0b6cff; --ok:#10b981; --warn:#f59e0b; --err:#ef4444;
-      --radius:14px; --shadow:0 8px 28px rgba(0,0,0,.06); --w:1200px;
+      --bg:#0b1220;           /* dunkles Navy */
+      --panel:#0f172a;
+      --ink:#e7edf7;
+      --ink-2:#9fb2d3;
+      --border:#1f2a44;
+      --teal:#10b981;
+      --amber:#f59e0b;
+      --red:#ef4444;
+      --ok:#22c55e;
+      --radius:16px;
+      --shadow:0 10px 30px rgba(0,0,0,.25);
+      --maxw:1200px;
+      --sidebar:24%;
     }
     *{box-sizing:border-box}
-    body{margin:0;font:16px/1.45 system-ui,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--ink)}
-    a{color:var(--brand);text-decoration:none} a:hover{text-decoration:underline}
+    html,body{height:100%}
+    body{margin:0;background:linear-gradient(180deg,#0b1220,#0b1220 40%,#0a1326);color:var(--ink);font:16px/1.45 system-ui,Segoe UI,Roboto,Arial}
+    a{color:#7dd3fc;text-decoration:none}
+    a:hover{text-decoration:underline}
 
     /* Header */
-    header{background:#0f172a;color:#fff;position:sticky;top:0;z-index:5}
-    .bar{max-width:var(--w);margin:0 auto;padding:12px 16px;display:flex;gap:12px;align-items:center}
-    .logo{font-weight:900;letter-spacing:.2px}
-    .pill{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);padding:6px 10px;border-radius:10px;font-weight:700}
-    .right{margin-left:auto;display:flex;gap:10px;align-items:center}
+    header{position:sticky;top:0;z-index:10;background:#0b1220;border-bottom:1px solid #0c1b36}
+    .bar{max-width:var(--maxw);margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:10px}
+    .logo{font-weight:900;letter-spacing:.3px}
+    .tab{padding:8px 14px;border-radius:12px;background:#0e1b34;border:1px solid #17284a;font-weight:800}
+    .tab.active{background:#11254a;border-color:#274376;box-shadow:inset 0 0 0 1px #2d4d86}
+    .right{margin-left:auto;display:flex;align-items:center;gap:10px}
+    .meter{width:220px;height:10px;border-radius:999px;background:#0c1a34;border:1px solid #17305d;overflow:hidden}
+    .meter>span{display:block;height:100%;width:0%}
+    .btn{padding:8px 12px;border-radius:12px;border:1px solid #1d2f56;background:#142449;color:#dce9ff;font-weight:800;cursor:pointer}
+    .btn:hover{filter:brightness(1.05)}
+    .btn.topup{background:rgba(245,158,11,.16);border-color:#3a2c08}
 
-    /* Token bar */
-    .tok{display:flex;align-items:center;gap:10px}
-    .tok .track{width:200px;height:10px;border-radius:999px;background:rgba(255,255,255,.16);overflow:hidden;border:1px solid rgba(255,255,255,.22)}
-    .tok .fill{height:100%;width:0;background:#22d3ee}
-    .tok .num{font-weight:800}
+    /* Layout */
+    main{max-width:var(--maxw);margin:16px auto;display:grid;grid-template-columns: calc(100% - var(--sidebar)) var(--sidebar);gap:16px;padding:0 16px}
+    @media (max-width: 980px){
+      main{grid-template-columns:1fr}
+      aside{order:3}
+      .sidebar-toggle{display:block}
+    }
 
-    .btn{padding:8px 12px;border-radius:10px;border:1px solid #334155;background:#1f2937;color:#fff;font-weight:800;cursor:pointer}
-    .btn.secondary{background:#fff;color:#0f172a;border-color:#cbd5e1}
-
-    /* Layout: 80/20 */
-    main{max-width:var(--w);margin:16px auto;padding:0 16px}
-    .grid{display:grid;grid-template-columns: 1fr 280px; gap:16px}
-    @media (max-width:980px){ .grid{grid-template-columns:1fr} }
-
-    .card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+    /* Cards */
+    .card{background:radial-gradient(1200px 40% at -10% -10%,rgba(47,147,255,.08),transparent 60%) , var(--panel);
+          border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow)}
     .pad{padding:16px}
-    .muted{color:var(--muted)}
+    .muted{color:var(--ink-2)}
+    .h1{margin:0 0 6px;font-size:28px}
+    h2{margin:0 0 10px}
 
-    textarea{width:100%;min-height:160px;padding:12px;border:1px solid #cbd5e1;border-radius:12px;font:inherit;background:#fff}
-    input[type=text]{width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:12px;font:inherit;background:#fff}
-    .row{display:flex;gap:8px;flex-wrap:wrap}
-
-    /* Chat / Antwort */
-    .ans{background:#0f172a;color:#e2e8f0;border-radius:12px;padding:12px;white-space:pre-wrap}
-    .refs{list-style:none;margin:10px 0 0;padding:0}
-    .refs li{padding:8px;border-top:1px solid #1e293b}
-    .refs a{color:#7dd3fc}
+    /* Inputs & composer */
+    textarea{width:100%;min-height:160px;padding:14px;border-radius:14px;border:1px solid #1e315b;background:#0a1530;color:var(--ink);font:inherit}
+    input[type=text]{width:100%;padding:12px;border-radius:12px;border:1px solid #1e315b;background:#0a1530;color:var(--ink);font:inherit;margin-top:8px}
+    .composer-actions{display:flex;align-items:center;gap:8px;margin-top:10px}
+    .send{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;border:1px solid #0f2e2a;background:#0e3b34;color:#dcfce7;font-weight:900;cursor:pointer}
+    .send svg{width:16px;height:16px}
+    .send.draft{background:#2b1c05;border-color:#573b08;color:#fff4e6}
 
     /* Sidebar */
-    aside h3{margin:0 0 8px}
-    .matchlist{list-style:none;margin:0;padding:0}
-    .match{padding:10px;border-bottom:1px solid var(--border)}
-    .match .meta{font-size:12px;color:var(--muted)}
+    aside .head{display:flex;align-items:center;justify-content:space-between}
+    .live{list-style:none;margin:0;padding:0}
+    .live li{padding:10px;border-bottom:1px solid #162544}
+    .badge{display:inline-block;font-size:11px;padding:2px 6px;border-radius:10px;background:rgba(245,158,11,.15);border:1px solid #3a2c08;color:#ffd98a;margin-left:6px}
+
+    /* Answer & refs */
+    .answer{white-space:pre-wrap;background:#0a1530;color:#dbe7ff;padding:12px;border-radius:12px;border:1px solid #1e315b}
+    .refs{list-style:none;margin:6px 0 0;padding:0}
+    .refs li{padding:8px;border-bottom:1px dashed #203665;font-size:14px}
+    .ok{color:var(--ok)} .warn{color:var(--amber)} .err{color:var(--red)}
+
+    .sidebar-toggle{display:none;margin-bottom:12px}
   </style>
 </head>
 <body>
-<header>
-  <div class="bar">
-    <div class="logo">GIAP</div>
-    <span class="pill">Churchen</span>
-    <div class="right">
-      <div class="tok">
-        <div class="track"><div id="tokfill" class="fill"></div></div>
-        <div id="toknum" class="num">0.00</div>
-        <span class="muted">Tokens</span>
-      </div>
-      <button id="topup" class="btn">Tokens aufladen</button>
-    </div>
-  </div>
-</header>
 
-<main class="grid">
-  <!-- Left: Composer + Antwort -->
-  <section class="card pad">
-    <h2 style="margin:0 0 6px">Every Idea. One Click. Global Reach.</h2>
-    <p class="muted" style="margin-top:0">Schreibe frei wie bei ChatGPT. Du zahlst **nur Nutzung**, kein Abo. Wir zeigen dir Quellen & ähnliche Ideen in Echtzeit.</p>
+  <header>
+    <div class="bar">
+      <div class="logo">GIAP</div>
+      <div class="tab active">Churchen</div>
 
-    <div class="card pad" style="margin-top:12px">
-      <textarea id="idea" placeholder="Schreib deinen Gedanken …"></textarea>
-      <input id="tags" type="text" placeholder="(optional) tags: klima, solar, protokoll" style="margin-top:8px" />
-      <div class="row" style="margin-top:10px">
-        <button id="send" class="btn" style="background:#0b6cff;border-color:#0b6cff">Churchen</button>
-        <button id="clear" class="btn secondary">Clear</button>
+      <div class="right">
+        <div class="meter" aria-label="Token-Verbrauch">
+          <span id="meter-fill" style="background:linear-gradient(90deg,#22c55e,#16a34a);width:0%"></span>
+        </div>
+        <div id="balance-label" class="muted" style="min-width:72px;text-align:right">0.00</div>
+        <button id="btn-topup" class="btn topup">Tokens aufladen</button>
       </div>
     </div>
+  </header>
 
-    <div id="result" class="card pad" style="margin-top:12px;display:none">
-      <h3 style="margin:0 0 6px">Antwort</h3>
-      <div id="answer" class="ans">(wartet …)</div>
-      <h4 style="margin:12px 0 6px">Referenzen & Quellen</h4>
-      <ul id="refs" class="refs"></ul>
+  <main>
+    <!-- LEFT -->
+    <section class="card pad">
+      <h1 class="h1">Every Idea. One Click. Global Reach.</h1>
+      <p class="muted" style="margin:6px 0 10px">
+        Schreibe frei wie bei ChatGPT. Du zahlst <b>nur Nutzung</b>, kein Abo.
+        Wir verknüpfen deine Gedanken mit Quellen, zeigen ähnliche Ideen
+        und verbinden dich mit der Außenwelt – in Echtzeit.
+      </p>
 
-      <div class="row" style="margin-top:10px">
-        <button id="publish" class="btn" style="background:#f59e0b;border-color:#f59e0b">Veröffentlichen</button>
-        <button id="copyid" class="btn secondary">IdeaID kopieren</button>
-        <button id="openjson" class="btn secondary" style="display:none">Öffentliche JSON öffnen</button>
+      <div class="card pad" style="margin-top:12px">
+        <label class="muted" for="idea" style="display:block;margin:0 0 6px">Wie kann ich helfen — was treibt dich um?</label>
+        <textarea id="idea" placeholder="Schreib deinen Gedanken …"></textarea>
+        <input id="tags" type="text" placeholder="(optional) tags: klima, solar, protokoll" />
+
+        <div class="composer-actions">
+          <button id="btn-send" class="send" title="Senden (Enter)">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4 4l16 8-16 8 4-8-4-8z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+            Senden
+          </button>
+          <small class="muted">Enter = senden</small>
+        </div>
       </div>
-      <div class="muted" style="margin-top:6px">powered by OpenAI · verarbeitet über deine GIAP-API</div>
-    </div>
-  </section>
 
-  <!-- Right: Sidebar (20%) -->
-  <aside class="card pad">
-    <h3>Live Matches</h3>
-    <div class="muted" style="margin-bottom:6px">Letzte Treffer & ähnliche Ideen</div>
-    <ul id="live" class="matchlist"></ul>
-  </aside>
-</main>
+      <div id="result" class="card pad" style="margin-top:12px;display:none">
+        <h3 style="margin:0 0 6px">Antwort</h3>
+        <div id="answer" class="answer">(wartet …)</div>
 
-<script src="app.js?v=9"></script>
+        <h4 style="margin:12px 0 6px">Referenzen & Quellen</h4>
+        <ul id="refs" class="refs"></ul>
+
+        <div class="composer-actions" style="margin-top:10px">
+          <button id="publish" class="btn" style="background:#f59e0b;border-color:#f59e0b;color:#1f1301">Veröffentlichen</button>
+          <button id="openjson" class="btn" style="display:none">Öffentliche JSON öffnen</button>
+          <span id="ai-status" class="muted"></span>
+        </div>
+
+        <div class="muted" style="margin-top:6px">powered by OpenAI · verarbeitet über deine GIAP-API</div>
+      </div>
+
+      <div class="card pad" style="margin-top:12px">
+        <h3 style="margin:0 0 6px">Log</h3>
+        <pre id="log" style="white-space:pre-wrap;background:#08112a;color:#cfe1ff;padding:12px;border-radius:12px;max-height:260px;overflow:auto;margin:0"></pre>
+      </div>
+    </section>
+
+    <!-- RIGHT -->
+    <aside class="card pad">
+      <button id="toggle-live" class="btn sidebar-toggle">Live Matches ein/aus</button>
+      <div class="head">
+        <h2 style="margin:0;display:flex;align-items:center;gap:8px">Live Matches <span class="badge">Preview</span></h2>
+      </div>
+      <p class="muted" style="margin:6px 0 10px">Letzte Treffer & ähnliche Ideen</p>
+      <ul id="live" class="live"></ul>
+    </aside>
+  </main>
+
+  <script src="app.js?v=9"></script>
 </body>
 </html>
