@@ -3,322 +3,171 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>GIAP · Draft Studio</title>
+  <title>GIAP — Draft Studio (lite)</title>
   <meta name="theme-color" content="#0f172a" />
   <style>
-    :root{--w:940px}
+    :root{--w:920px}
     *{box-sizing:border-box}
-    body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;margin:0;background:#0b1224;color:#e2e8f0}
-    a{color:#93c5fd}
+    body{font-family:system-ui,Segoe UI,Roboto,Arial;margin:0;background:#0b1224;color:#e2e8f0}
     header{background:#0f172a;border-bottom:1px solid #1f2937}
     .bar{max-width:var(--w);margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:10px}
-    .brand{font-weight:800;letter-spacing:.2px}
+    .brand{font-weight:800}
     main{max-width:var(--w);margin:0 auto;padding:16px}
-    .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:14px}
-    @media (max-width:880px){ .grid{grid-template-columns:1fr} }
     .card{background:#0f172a;border:1px solid #1f2937;border-radius:14px;padding:16px;box-shadow:0 6px 22px rgba(0,0,0,.25)}
-    h1{margin:6px 0 0;font-size:26px}
-    h2{margin:0 0 8px}
-    .lead{color:#94a3b8;margin:6px 0 10px}
-    textarea{width:100%;min-height:140px;padding:12px;border:1px solid #334155;border-radius:12px;background:#0b1224;color:#e2e8f0;font:inherit}
-    input[type=text]{width:100%;padding:10px;border:1px solid #334155;border-radius:12px;background:#0b1224;color:#e2e8f0;font:inherit}
+    .row{display:flex;gap:8px;flex-wrap:wrap}
+    textarea{width:100%;min-height:130px;padding:12px;border:1px solid #334155;border-radius:12px;background:#0b1224;color:#e2e8f0;font:inherit}
     button{padding:10px 14px;border-radius:12px;border:1px solid #334155;background:#18223b;color:#e2e8f0;font-weight:700;cursor:pointer}
-    button.primary{border-color:#2563eb;background:#2563eb}
-    button.warn{border-color:#f59e0b;background:#f59e0b;color:#0b1224}
-    button.success{border-color:#22c55e;background:#22c55e;color:#0b1224}
-    button[disabled]{opacity:.6;cursor:not-allowed}
-    .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-    .muted{color:#94a3b8}
+    button.primary{background:#2563eb;border-color:#2563eb}
+    button.success{background:#22c55e;border-color:#22c55e;color:#0b1224}
     .pill{display:inline-block;padding:4px 8px;border-radius:999px;border:1px solid #1f2937;background:#0b1224;color:#cbd5e1;font-size:12px}
-    .list{list-style:none;margin:0;padding:0}
-    .list li{padding:8px;border-bottom:1px solid #1f2937}
-    .k{background:#111827;border:1px solid #1f2937;border-radius:8px;padding:2px 6px}
-    .progress{height:10px;background:#0b1224;border:1px solid #1f2937;border-radius:999px;overflow:hidden}
-    .progress>div{height:100%;background:#22c55e;width:0%}
-    .status{display:flex;gap:6px;align-items:center}
-    .status .dot{width:10px;height:10px;border-radius:50%}
-    .dot.gray{background:#475569}
-    .dot.blue{background:#60a5fa}
-    .dot.amber{background:#f59e0b}
-    .dot.green{background:#22c55e}
-    .dot.teal{background:#14b8a6}
+    ul{list-style:none;margin:6px 0 0;padding:0}
+    li{padding:6px;border-bottom:1px solid #1f2937}
     pre{white-space:pre-wrap;background:#0b1224;border:1px solid #1f2937;border-radius:12px;padding:10px;max-height:260px;overflow:auto}
-    .alert{border:1px solid #f59e0b;background:#3b2f0b;color:#ffecc7;border-radius:10px;padding:10px}
+    .muted{color:#94a3b8}
     .ok{border:1px solid #22c55e;background:#0f2b1a;color:#c6f6d5;border-radius:10px;padding:10px}
+    .warn{border:1px solid #f59e0b;background:#3b2f0b;color:#ffecc7;border-radius:10px;padding:10px}
   </style>
 </head>
 <body>
-  <header>
-    <div class="bar">
-      <div class="brand">GIAP — Draft Studio</div>
-      <span class="muted" id="hdr-hash">—</span>
-      <div style="margin-left:auto" class="row">
-        <button id="btn-back">← Zurück</button>
-        <button id="btn-refresh" class="secondary">Neu laden</button>
-        <button id="btn-open-chat" class="secondary">ChatGPT öffnen</button>
+<header>
+  <div class="bar">
+    <div class="brand">GIAP — Draft Studio</div>
+    <span class="muted" id="hdr-id">—</span>
+    <div style="margin-left:auto" class="row">
+      <button id="btn-back">← Zurück</button>
+      <button id="btn-refresh">Neu laden</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="card">
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <h2 style="margin:0">Draft</h2>
+      <button id="btn-finalize" class="success">Finalisieren & veröffentlichen</button>
+    </div>
+    <div class="muted" style="margin:6px 0">IdeaID: <span id="idea-id" class="pill">—</span></div>
+    <div class="muted" style="margin-top:8px">Abstract</div>
+    <pre id="abstract">—</pre>
+
+    <div class="muted" style="margin-top:8px">Feedback</div>
+    <ul id="reasons"></ul>
+
+    <div class="row" style="margin-top:10px">
+      <textarea id="user-text" placeholder="Nächster Gedanke oder Bitte an GPT…"></textarea>
+      <div class="row">
+        <button id="btn-iterate" class="primary">Mit GPT iterieren</button>
       </div>
     </div>
-  </header>
+    <p class="muted" id="notice"></p>
+  </section>
 
-  <main>
-    <section class="card">
-      <h1>Idee verfeinern</h1>
-      <p class="lead">Erfülle die GIAP-Kriterien (2–6 klare Sätze, 3–7 EN-Tags, Neuigkeitswert, optional Heritage). Ab der 2. Draft-Runde wird eine kleine Gebühr fällig (0,60 €).</p>
-      <div id="notice" class="alert" style="display:none"></div>
-      <div class="row status" id="status-row" style="margin-top:8px">
-        <span class="dot gray" id="st-review"></span><span class="muted">Review</span>
-        <span class="dot blue" id="st-pass"></span><span class="muted">Pass</span>
-        <span class="dot amber" id="st-pay"></span><span class="muted">Payment</span>
-        <span class="dot green" id="st-paid"></span><span class="muted">Paid</span>
-        <span class="dot teal" id="st-final"></span><span class="muted">Finalized</span>
-      </div>
-      <div class="progress" style="margin-top:10px"><div id="bar"></div></div>
-    </section>
+  <section class="card">
+    <h3 style="margin:0 0 6px">Log</h3>
+    <pre id="log">—</pre>
+  </section>
+</main>
 
-    <div class="grid">
-      <section class="card">
-        <h2>Gespräch</h2>
-        <div id="history" class="list" style="margin-bottom:10px"></div>
-        <textarea id="user-text" placeholder="Schreibe deinen nächsten Gedanken oder bitte GPT um Hilfe…"></textarea>
-        <div class="row">
-          <button id="btn-iterate" class="primary">Mit GPT iterieren</button>
-          <button id="btn-pay" class="warn" style="display:none">Bezahlen (0,60 €)</button>
-          <button id="btn-finalize" class="success" style="display:none">Finalisieren</button>
-        </div>
-        <p class="muted" id="hint">Tipp: 2–6 klare Sätze, 3–7 EN-Tags, Neuigkeitswert & optional Heritage erwähnen.</p>
-      </section>
+<script>
+(function(){
+  'use strict';
 
-      <section class="card">
-        <h2>Draft</h2>
-        <div class="muted">IdeaID</div>
-        <div id="idea-id" class="pill" style="margin:6px 0">—</div>
-        <div class="muted" style="margin-top:8px">Abstract</div>
-        <pre id="abstract">—</pre>
-        <div class="muted" style="margin-top:8px">Reasons</div>
-        <ul id="reasons" class="list"></ul>
-      </section>
-    </div>
+  // ▼▼ EINSTELLEN: URL deines Drafts-Workers ▼▼
+  const DRAFTS_API = "https://giap-drafts.csac6316.workers.dev";
 
-    <section class="card">
-      <h2>Log</h2>
-      <pre id="log">—</pre>
-    </section>
-  </main>
+  const $ = s => document.querySelector(s);
+  const qs = new URLSearchParams(location.search);
+  const hash = (qs.get("hash") || "").trim();
 
-  <script>
-  (function(){
-    'use strict';
+  const ui = {
+    ideaId: $("#idea-id"),
+    abstract: $("#abstract"),
+    reasons: $("#reasons"),
+    log: $("#log"),
+    notice: $("#notice"),
+    idHdr: $("#hdr-id"),
+    btnIter: $("#btn-iterate"),
+    btnFin: $("#btn-finalize"),
+    userText: $("#user-text"),
+  };
 
-    // ========= ENDPOINT: nur der Drafts-Worker =========
-    const DRAFTS_API = 'https://giap-drafts.csac6316.workers.dev';
+  function log(tag, obj){
+    let txt = "";
+    try{ txt = JSON.stringify(obj,null,2) } catch { txt = String(obj) }
+    ui.log.textContent = `${tag?tag+" ✓ ":""}${txt}\n\n` + ui.log.textContent;
+  }
+  function setNotice(msg, ok=false){
+    ui.notice.className = ok ? "ok" : (msg ? "warn" : "");
+    ui.notice.textContent = msg || "";
+  }
+  function applyDraft(d){
+    ui.idHdr.textContent = d.id || "—";
+    ui.ideaId.textContent = d.id || "—";
+    ui.abstract.textContent = d.abstract || "—";
+    ui.reasons.innerHTML = "";
+    (d.reasons||[]).forEach(r => {
+      const li = document.createElement("li");
+      li.textContent = r;
+      ui.reasons.appendChild(li);
+    });
+  }
 
-    // ========= MINI-UTILS =========
-    const $ = sel => document.querySelector(sel);
-    const qs = new URLSearchParams(location.search);
-    const hash = (qs.get('hash') || '').trim();
-    const escape = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-    const log = (t,o) => { const pre = $('#log'); pre.textContent = (t? t+'\n':'') + (o? JSON.stringify(o,null,2):'') + '\n\n' + pre.textContent; };
-    const setNotice = (msg, ok=false) => { const n=$('#notice'); if(!msg){n.style.display='none'; n.textContent=''; return;} n.className = ok?'ok':'alert'; n.textContent = msg; n.style.display='block'; };
+  async function api(path, opts){
+    const r = await fetch(`${DRAFTS_API}${path}`, opts||{});
+    let data = {};
+    try{ data = await r.json() }catch{}
+    return { ok:r.ok, status:r.status, data };
+  }
 
-    $('#hdr-hash').textContent = hash ? ('#'+hash.slice(0,12)+'…') : '—';
+  async function load(){
+    if (!hash){ setNotice("Kein Draft-Hash in der URL (drafts.html?hash=...)"); return; }
+    const { ok, data } = await api(`/drafts/${encodeURIComponent(hash)}`);
+    log("load", data);
+    if (ok && data?.draft){ applyDraft(data.draft); setNotice("Draft geladen.", true); }
+    else setNotice(data?.error || "load_error");
+  }
 
-    const ui = {
-      id: $('#idea-id'),
-      abstract: $('#abstract'),
-      reasons: $('#reasons'),
-      bar: $('#bar'),
-      pay: $('#btn-pay'),
-      iterate: $('#btn-iterate'),
-      finalize: $('#btn-finalize'),
-      history: $('#history'),
-      hint: $('#hint'),
-      userText: $('#user-text')
-    };
+  $("#btn-refresh").onclick = load;
+  $("#btn-back").onclick = ()=> history.length ? history.back() : (location.href="/");
 
-    // ========= STATUS / PROGRESS =========
-    function paintStatus(d){
-      const s = (d.status|| (d.verdict==='pass' ? 'pass' : 'review'));
-      const ex = Number(d.exchanges||0);
-      $('#st-review').style.opacity = (['review','pass','payment_required','paid','finalized'].includes(s))?1:.35;
-      $('#st-pass').style.opacity   = (['pass','payment_required','paid','finalized'].includes(s))?1:.35;
-      $('#st-pay').style.opacity    = (['payment_required','paid','finalized'].includes(s))?1:.35;
-      $('#st-paid').style.opacity   = (['paid','finalized'].includes(s))?1:.35;
-      $('#st-final').style.opacity  = (s==='finalized')?1:.35;
+  $("#btn-iterate").onclick = async ()=>{
+    const t = ui.userText.value.trim();
+    if (!t){ setNotice("Bitte Text eingeben."); return; }
+    ui.btnIter.disabled = true;
+    const { ok, data, status } = await api(`/drafts/iterate`, {
+      method:"POST", headers:{ "content-type":"application/json" },
+      body: JSON.stringify({ hash, user_text: t })
+    });
+    log("iterate", {status, data});
+    ui.btnIter.disabled = false;
+    if (ok && data?.draft){ applyDraft(data.draft); ui.userText.value=""; setNotice("Iteration ok.", true); }
+    else setNotice(data?.error || "iterate_error");
+  };
 
-      let w = 10;
-      if (s==='review') w = Math.min(40, 10 + ex*10);
-      if (s==='pass') w = 60;
-      if (s==='payment_required') w = 75;
-      if (s==='paid') w = 90;
-      if (s==='finalized') w = 100;
-      ui.bar.style.width = w + '%';
-
-      ui.pay.style.display = (s==='payment_required') ? '' : 'none';
-      ui.finalize.style.display = (s==='paid' || (s==='pass' && d.paid)) ? '' : 'none';
-    }
-
-    function renderReasons(list){
-      ui.reasons.innerHTML = '';
-      (list||[]).forEach(x=>{
-        const li=document.createElement('li');
-        li.textContent = x;
-        ui.reasons.appendChild(li);
-      });
-    }
-
-    function renderHistory(h){
-      ui.history.innerHTML = '';
-      (h||[]).slice(-16).forEach(it=>{
-        const row = document.createElement('div');
-        row.style.padding = '8px';
-        row.style.borderBottom = '1px solid #1f2937';
-        const who = it.role==='assistant' ? 'GPT' : 'Du';
-        const when = new Date(it.ts||Date.now()).toLocaleString();
-        row.innerHTML = `<div class="muted">${when} • <span class="pill">${who}</span></div>
-                         <div style="margin-top:4px">${escape(it.text||'')}</div>`;
-        ui.history.appendChild(row);
-      });
-    }
-
-    function applyDraft(d){
-      ui.id.textContent = d.id || '—';
-      ui.abstract.textContent = d.abstract ? d.abstract : '—';
-      renderReasons(d.reasons || []);
-      renderHistory(d.history || []);
-      paintStatus(d);
-    }
-
-    // ========= API (alle Calls → DRAFTS_API) =========
-    async function apiGetDraft(){
-      const r = await fetch(`${DRAFTS_API}/drafts/${encodeURIComponent(hash)}`, { cache:'no-store' });
-      let j = {};
-      try { j = await r.json(); } catch {}
-      if (r.ok && j?.ok) return j.draft;
-      if (!r.ok && (j?.error==='not_found' || j?.error==='draft_not_found' || r.status===404)){
-        throw new Error('Draft nicht gefunden (stammt der Hash aus /drafts/ingest oder /drafts/submit?).');
+  $("#btn-finalize").onclick = async ()=>{
+    ui.btnFin.disabled = true;
+    const { ok, data, status } = await api(`/drafts/finalize`, {
+      method:"POST", headers:{ "content-type":"application/json" },
+      body: JSON.stringify({ hash })
+    });
+    log("finalize", {status, data});
+    ui.btnFin.disabled = false;
+    if (ok && data?.publish?.ok){
+      setNotice("Veröffentlicht! Deine Idee hat jetzt eine Adresse.", true);
+      // Optional: öffentliche JSON in neuem Tab
+      const id = data.draft?.id;
+      if (id) {
+        const blob = new Blob([JSON.stringify({ id, abstract: data.draft.abstract }, null, 2)], {type:"application/json"});
+        window.open(URL.createObjectURL(blob), "_blank", "noopener");
       }
-      throw new Error(j?.error || `HTTP ${r.status}`);
+    } else {
+      setNotice(data?.error || "Publish fehlgeschlagen.");
     }
+  };
 
-    async function apiIterate(userText){
-      const r = await fetch(`${DRAFTS_API}/drafts/iterate`, {
-        method:'POST',
-        headers:{'content-type':'application/json'},
-        body: JSON.stringify({ hash, user_text: userText||'' })
-      });
-      if (r.status===402){
-        const j = await r.json().catch(()=>({}));
-        ui.pay.dataset.url = j.checkout_url || '';
-        ui.pay.style.display = '';
-        paintStatus(j.draft || {status:'payment_required'});
-        setNotice('Zahlung erforderlich, um weiter zu iterieren.');
-        log('payment_required', j);
-        throw new Error('payment_required');
-      }
-      const j = await r.json().catch(()=>({}));
-      if (!r.ok || !j?.ok) throw new Error(j?.error || `HTTP ${r.status}`);
-      return j.draft;
-    }
-
-    async function apiCheckout(){
-      const r = await fetch(`${DRAFTS_API}/drafts/checkout`, {
-        method:'POST',
-        headers:{'content-type':'application/json'},
-        body: JSON.stringify({ hash })
-      });
-      const j = await r.json().catch(()=>({}));
-      if (!r.ok || !j?.ok) throw new Error(j?.error || `HTTP ${r.status}`);
-      return j.checkout_url;
-    }
-
-    async function apiFinalize(){
-      const r = await fetch(`${DRAFTS_API}/drafts/finalize`, {
-        method:'POST',
-        headers:{'content-type':'application/json'},
-        body: JSON.stringify({ hash })
-      });
-      const j = await r.json().catch(()=>({}));
-      if (!r.ok || !j?.ok) throw new Error(j?.error || `HTTP ${r.status}`);
-      return j.draft;
-    }
-
-    // ========= EVENTS =========
-    $('#btn-open-chat').onclick = ()=> window.open('https://chatgpt.com/', '_blank', 'noopener');
-    $('#btn-back').onclick = ()=> history.length ? history.back() : (location.href = './index.html');
-    $('#btn-refresh').onclick = async ()=>{
-      try{
-        setNotice('');
-        const d = await apiGetDraft();
-        applyDraft(d);
-        setNotice('Draft aktualisiert.', true);
-      }catch(e){ setNotice(e.message||String(e)); log('refresh_error', {err:String(e)}); }
-    };
-
-    $('#btn-iterate').onclick = async ()=>{
-      const txt = ui.userText.value.trim();
-      if (!txt){ setNotice('Bitte Text eingeben.'); return; }
-      ui.iterate.disabled = true;
-      try{
-        setNotice('');
-        const d = await apiIterate(txt);
-        applyDraft(d);
-        ui.userText.value = '';
-        setNotice('Iteration erfolgreich.', true);
-        log('iterate_ok', d);
-      }catch(e){
-        if (String(e.message||e) !== 'payment_required'){
-          setNotice('Iteration fehlgeschlagen: ' + (e.message||e));
-          log('iterate_error', {err:String(e)});
-        }
-      }finally{ ui.iterate.disabled = false; }
-    };
-
-    $('#btn-pay').onclick = async ()=>{
-      try{
-        setNotice('');
-        const existing = ui.pay.dataset.url || '';
-        if (existing){ window.open(existing, '_blank', 'noopener'); return; }
-        const url = await apiCheckout();
-        ui.pay.dataset.url = url || '';
-        if (url) window.open(url, '_blank', 'noopener');
-        else setNotice('Checkout-URL nicht verfügbar.');
-      }catch(e){
-        setNotice('Bezahlvorgang fehlgeschlagen: ' + (e.message||e));
-        log('checkout_error', {err:String(e)});
-      }
-    };
-
-    $('#btn-finalize').onclick = async ()=>{
-      ui.finalize.disabled = true;
-      try{
-        setNotice('');
-        const d = await apiFinalize();
-        applyDraft(d);
-        setNotice('Draft finalisiert und verewigt.', true);
-        log('finalize_ok', d);
-      }catch(e){
-        setNotice('Finalisieren fehlgeschlagen: ' + (e.message||e));
-        log('finalize_error', {err:String(e)});
-      }finally{ ui.finalize.disabled = false; }
-    };
-
-    // ========= INIT =========
-    (async function init(){
-      if (!hash){
-        setNotice('Kein Draft-Hash in der URL gefunden. Öffne diese Seite als: drafts.html?hash=<DRAFT_HASH>.');
-        return;
-      }
-      try{
-        const d = await apiGetDraft();
-        applyDraft(d);
-        setNotice('Draft geladen.', true);
-        log('load_ok', d);
-      }catch(e){
-        setNotice(e.message||String(e));
-        log('load_error', {err:String(e)});
-      }
-    })();
-  })();
-  </script>
+  // init
+  load();
+})();
+</script>
 </body>
 </html>
