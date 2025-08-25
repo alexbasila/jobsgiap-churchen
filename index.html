@@ -3,163 +3,114 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>GIAP — Churchen</title>
-  <meta name="theme-color" content="#0f172a" />
+  <title>GIAP – Churchen</title>
   <meta name="color-scheme" content="light dark" />
   <style>
     :root{
-      --bg:#f8fafc;
-      --panel:#ffffff;
-      --slate:#0f172a;
-      --slate-2:#111827;
-      --muted:#64748b;
-      --border:#e5e7eb;
-      --teal:#14b8a6;   /* Idee */
-      --amber:#f59e0b;  /* Verknüpfung */
-      --danger:#ef4444;
-      --ok:#10b981;
-      --maxw:1120px;
-      --radius:14px;
-      --shadow:0 8px 28px rgba(0,0,0,.06);
+      --bg:#f8fafc; --panel:#ffffff; --ink:#0f172a; --muted:#64748b; --border:#e5e7eb;
+      --brand:#0b6cff; --ok:#10b981; --warn:#f59e0b; --err:#ef4444;
+      --radius:14px; --shadow:0 8px 28px rgba(0,0,0,.06); --w:1200px;
     }
     *{box-sizing:border-box}
-    html,body{height:100%}
-    body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--slate)}
-    a{color:var(--teal);text-decoration:none}
-    a:hover{text-decoration:underline}
+    body{margin:0;font:16px/1.45 system-ui,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--ink)}
+    a{color:var(--brand);text-decoration:none} a:hover{text-decoration:underline}
 
     /* Header */
-    header{background:var(--slate);color:#fff;position:sticky;top:0;z-index:9}
-    .bar{max-width:var(--maxw);margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:12px}
-    .brand{font-weight:800;letter-spacing:.2px}
-    .pill{border:1px solid rgba(255,255,255,.16);border-radius:12px;padding:8px 12px;background:rgba(255,255,255,.06);color:#fff;font-weight:700}
-    .right{margin-left:auto;display:flex;align-items:center;gap:8px}
-    .balance{border:1px solid rgba(255,255,255,.16);border-radius:12px;padding:8px 12px;background:rgba(20,184,166,.12);color:#e2f7f3}
-    .topup{border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:8px 12px;background:rgba(245,158,11,.14);color:#fff;font-weight:800;cursor:pointer}
+    header{background:#0f172a;color:#fff;position:sticky;top:0;z-index:5}
+    .bar{max-width:var(--w);margin:0 auto;padding:12px 16px;display:flex;gap:12px;align-items:center}
+    .logo{font-weight:900;letter-spacing:.2px}
+    .pill{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);padding:6px 10px;border-radius:10px;font-weight:700}
+    .right{margin-left:auto;display:flex;gap:10px;align-items:center}
 
-    /* Layout */
-    main{max-width:var(--maxw);margin:0 auto;padding:16px}
-    .grid{display:grid;grid-template-columns: 1.2fr .8fr; gap:16px}
-    @media (max-width: 960px){ .grid{grid-template-columns:1fr} }
+    /* Token bar */
+    .tok{display:flex;align-items:center;gap:10px}
+    .tok .track{width:200px;height:10px;border-radius:999px;background:rgba(255,255,255,.16);overflow:hidden;border:1px solid rgba(255,255,255,.22)}
+    .tok .fill{height:100%;width:0;background:#22d3ee}
+    .tok .num{font-weight:800}
+
+    .btn{padding:8px 12px;border-radius:10px;border:1px solid #334155;background:#1f2937;color:#fff;font-weight:800;cursor:pointer}
+    .btn.secondary{background:#fff;color:#0f172a;border-color:#cbd5e1}
+
+    /* Layout: 80/20 */
+    main{max-width:var(--w);margin:16px auto;padding:0 16px}
+    .grid{display:grid;grid-template-columns: 1fr 280px; gap:16px}
+    @media (max-width:980px){ .grid{grid-template-columns:1fr} }
 
     .card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
-    .card.pad{padding:16px}
+    .pad{padding:16px}
     .muted{color:var(--muted)}
-    h1{margin:0 0 6px;font-size:26px}
-    h2{margin:0 0 8px}
-    h3{margin:0 0 8px}
 
-    /* Inputs */
     textarea{width:100%;min-height:160px;padding:12px;border:1px solid #cbd5e1;border-radius:12px;font:inherit;background:#fff}
     input[type=text]{width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:12px;font:inherit;background:#fff}
-    label.inline{display:flex;align-items:center;gap:8px;margin-top:10px}
     .row{display:flex;gap:8px;flex-wrap:wrap}
 
-    /* Buttons */
-    button{padding:10px 14px;border-radius:12px;border:1px solid var(--slate);background:var(--slate);color:#fff;font-weight:800;cursor:pointer}
-    button.secondary{background:#fff;color:var(--slate)}
-    button.teal{background:var(--teal);border-color:var(--teal)}
-    button.amber{background:var(--amber);border-color:var(--amber)}
-    button:disabled{opacity:.5;cursor:not-allowed}
+    /* Chat / Antwort */
+    .ans{background:#0f172a;color:#e2e8f0;border-radius:12px;padding:12px;white-space:pre-wrap}
+    .refs{list-style:none;margin:10px 0 0;padding:0}
+    .refs li{padding:8px;border-top:1px solid #1e293b}
+    .refs a{color:#7dd3fc}
 
-    /* Lists */
+    /* Sidebar */
+    aside h3{margin:0 0 8px}
     .matchlist{list-style:none;margin:0;padding:0}
-    .match{padding:10px;border-bottom:1px solid var(--border);cursor:default}
-    .match:hover{background:#f1f5f9}
-    .meta{font-size:12px;color:var(--muted)}
-    .badge{display:inline-block;background:rgba(245,158,11,.16);color:#9a6700;border:1px solid rgba(245,158,11,.4);padding:2px 6px;border-radius:10px;font-size:11px;margin-left:6px}
-
-    .powered{font-size:12px;color:#94a3b8;margin-top:6px}
-    .powered b{color:#64748b}
-    #ai-status{font-size:12px}
-    .okay{color:var(--ok)} .warn{color:var(--amber)} .err{color:var(--danger)}
+    .match{padding:10px;border-bottom:1px solid var(--border)}
+    .match .meta{font-size:12px;color:var(--muted)}
   </style>
 </head>
 <body>
+<header>
+  <div class="bar">
+    <div class="logo">GIAP</div>
+    <span class="pill">Churchen</span>
+    <div class="right">
+      <div class="tok">
+        <div class="track"><div id="tokfill" class="fill"></div></div>
+        <div id="toknum" class="num">0.00</div>
+        <span class="muted">Tokens</span>
+      </div>
+      <button id="topup" class="btn">Tokens aufladen</button>
+    </div>
+  </div>
+</header>
 
-  <header>
-    <div class="bar">
-      <div class="brand">GIAP — Churchen</div>
-      <div class="pill">beta</div>
-      <div class="right">
-        <div id="balance" class="balance">0.00 Tokens</div>
-        <button id="btn-topup" class="topup">Tokens aufladen</button>
-        <button id="btn-health" class="pill">Check API</button>
+<main class="grid">
+  <!-- Left: Composer + Antwort -->
+  <section class="card pad">
+    <h2 style="margin:0 0 6px">Every Idea. One Click. Global Reach.</h2>
+    <p class="muted" style="margin-top:0">Schreibe frei wie bei ChatGPT. Du zahlst **nur Nutzung**, kein Abo. Wir zeigen dir Quellen & ähnliche Ideen in Echtzeit.</p>
+
+    <div class="card pad" style="margin-top:12px">
+      <textarea id="idea" placeholder="Schreib deinen Gedanken …"></textarea>
+      <input id="tags" type="text" placeholder="(optional) tags: klima, solar, protokoll" style="margin-top:8px" />
+      <div class="row" style="margin-top:10px">
+        <button id="send" class="btn" style="background:#0b6cff;border-color:#0b6cff">Churchen</button>
+        <button id="clear" class="btn secondary">Clear</button>
       </div>
     </div>
-  </header>
 
-  <main class="grid">
-    <!-- Left: Compose & Results -->
-    <section class="card pad">
-      <h1>Every Idea. One Click. Global Reach.</h1>
-      <p class="muted">Bearbeite deine Gedanken hier – <b style="color:var(--teal)">Idee</b> verknüpft sich mit der <b style="color:var(--amber)">Außenwelt</b>. Jede Idee bekommt eine Adresse.</p>
+    <div id="result" class="card pad" style="margin-top:12px;display:none">
+      <h3 style="margin:0 0 6px">Antwort</h3>
+      <div id="answer" class="ans">(wartet …)</div>
+      <h4 style="margin:12px 0 6px">Referenzen & Quellen</h4>
+      <ul id="refs" class="refs"></ul>
 
-      <div class="card pad" style="margin-top:12px">
-        <h2>1) Capture → Churchen</h2>
-        <textarea id="idea" placeholder="Schreibe deine Idee hier…"></textarea>
-        <input id="tags" type="text" placeholder="(optional) tags, comma-separated e.g. water, solar, protocol" />
-        <label class="inline">
-          <input id="force-gpt" type="checkbox" />
-          <span>Always use GPT heritage (debug)</span>
-        </label>
-        <div class="row" style="margin-top:10px">
-          <button id="btn-churchen" class="teal">Churchen (ID + Matches)</button>
-          <button id="btn-clear" class="secondary">Clear</button>
-        </div>
-        <div class="powered">powered by <b>OpenAI</b> · verarbeitet durch deinen <b>GIAP-API</b> Worker</div>
+      <div class="row" style="margin-top:10px">
+        <button id="publish" class="btn" style="background:#f59e0b;border-color:#f59e0b">Veröffentlichen</button>
+        <button id="copyid" class="btn secondary">IdeaID kopieren</button>
+        <button id="openjson" class="btn secondary" style="display:none">Öffentliche JSON öffnen</button>
       </div>
+      <div class="muted" style="margin-top:6px">powered by OpenAI · verarbeitet über deine GIAP-API</div>
+    </div>
+  </section>
 
-      <div id="out" class="card pad" style="margin-top:12px; display:none">
-        <h2>2) Ergebnis</h2>
-        <div class="row">
-          <div style="flex:1">
-            <label>IdeaID</label>
-            <input id="ideaId" type="text" readonly />
-          </div>
-          <div style="flex:1">
-            <label>Content Hash (SHA-256)</label>
-            <input id="hash" type="text" readonly />
-          </div>
-        </div>
+  <!-- Right: Sidebar (20%) -->
+  <aside class="card pad">
+    <h3>Live Matches</h3>
+    <div class="muted" style="margin-bottom:6px">Letzte Treffer & ähnliche Ideen</div>
+    <ul id="live" class="matchlist"></ul>
+  </aside>
+</main>
 
-        <div style="margin-top:10px">
-          <h3 style="display:flex;align-items:center;gap:8px;margin:0 0 6px">
-            Matches <span id="ai-status" class="muted"></span>
-          </h3>
-          <ul id="matches" class="matchlist"></ul>
-        </div>
-
-        <div class="row" style="margin-top:8px">
-          <button id="btn-publish" class="amber">Publish (ins Registry)</button>
-          <button id="btn-copy-ideal" class="secondary">Copy IdeaID</button>
-          <button id="btn-open-json" class="secondary" style="display:none">Open public JSON</button>
-        </div>
-      </div>
-
-      <div class="card pad" style="margin-top:12px">
-        <h2>3) Feed (Neueste)</h2>
-        <div class="row">
-          <button id="btn-feed" class="secondary">Load feed</button>
-        </div>
-        <ul id="feed" class="matchlist"></ul>
-      </div>
-
-      <div class="card pad" style="margin-top:12px">
-        <h2>Log</h2>
-        <pre id="log" style="white-space:pre-wrap;background:#0f172a;color:#e2e8f0;padding:12px;border-radius:10px;max-height:260px;overflow:auto;margin:0"></pre>
-      </div>
-    </section>
-
-    <!-- Right: Live sidebar -->
-    <aside class="card pad">
-      <h2 style="display:flex;align-items:center;gap:8px">Live Matches <span class="badge">Preview</span></h2>
-      <div class="muted" style="margin-bottom:6px">Zeigt die letzten Churchen-Ergebnisse dieser Sitzung.</div>
-      <ul id="live" class="matchlist"></ul>
-      <div class="powered" style="margin-top:10px">Hinweis: Diese Sidebar aktualisiert sich nach jedem Churchen-Call.</div>
-    </aside>
-  </main>
-
-  <script src="app.js?v=8"></script>
+<script src="app.js?v=9"></script>
 </body>
 </html>
