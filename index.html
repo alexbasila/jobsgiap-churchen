@@ -1,135 +1,165 @@
 <!doctype html>
-<html lang="en">
+<html lang="de">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>GIAP · Churchen</title>
+  <title>GIAP — Churchen</title>
   <meta name="theme-color" content="#0f172a" />
+  <meta name="color-scheme" content="light dark" />
   <style>
-    :root{--w:940px}
+    :root{
+      --bg:#f8fafc;
+      --panel:#ffffff;
+      --slate:#0f172a;
+      --slate-2:#111827;
+      --muted:#64748b;
+      --border:#e5e7eb;
+      --teal:#14b8a6;   /* Idee */
+      --amber:#f59e0b;  /* Verknüpfung */
+      --danger:#ef4444;
+      --ok:#10b981;
+      --maxw:1120px;
+      --radius:14px;
+      --shadow:0 8px 28px rgba(0,0,0,.06);
+    }
     *{box-sizing:border-box}
-    body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;margin:0;background:#fafafa;color:#0f172a}
-    header{background:#0f172a;color:#fff}
-    .bar{max-width:var(--w);margin:0 auto;padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
-    main{max-width:var(--w);margin:0 auto;padding:16px}
-    .card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:16px;margin:12px 0;box-shadow:0 6px 20px rgba(0,0,0,.05)}
-    h1{margin:6px 0 0;font-size:26px}
+    html,body{height:100%}
+    body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--slate)}
+    a{color:var(--teal);text-decoration:none}
+    a:hover{text-decoration:underline}
+
+    /* Header */
+    header{background:var(--slate);color:#fff;position:sticky;top:0;z-index:9}
+    .bar{max-width:var(--maxw);margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:12px}
+    .brand{font-weight:800;letter-spacing:.2px}
+    .pill{border:1px solid rgba(255,255,255,.16);border-radius:12px;padding:8px 12px;background:rgba(255,255,255,.06);color:#fff;font-weight:700}
+    .right{margin-left:auto;display:flex;align-items:center;gap:8px}
+    .balance{border:1px solid rgba(255,255,255,.16);border-radius:12px;padding:8px 12px;background:rgba(20,184,166,.12);color:#e2f7f3}
+    .topup{border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:8px 12px;background:rgba(245,158,11,.14);color:#fff;font-weight:800;cursor:pointer}
+
+    /* Layout */
+    main{max-width:var(--maxw);margin:0 auto;padding:16px}
+    .grid{display:grid;grid-template-columns: 1.2fr .8fr; gap:16px}
+    @media (max-width: 960px){ .grid{grid-template-columns:1fr} }
+
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .card.pad{padding:16px}
+    .muted{color:var(--muted)}
+    h1{margin:0 0 6px;font-size:26px}
     h2{margin:0 0 8px}
-    .lead{color:#475569;margin:6px 0 2px}
-    textarea{width:100%;min-height:140px;padding:12px;border:1px solid #cbd5e1;border-radius:12px;font:inherit}
-    input[type=text]{width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:12px;font:inherit}
-    input[readonly]{background:#f8fafc}
-    .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-    button{padding:10px 14px;border-radius:12px;border:1px solid #0f172a;background:#0f172a;color:#fff;font-weight:700;cursor:pointer}
-    button.secondary{background:#fff;color:#0f172a}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .list{list-style:none;margin:0;padding:0}
-    .list li{padding:8px;border-bottom:1px solid #eee}
-    small.muted{color:#64748b}
-    code.k{background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;padding:3px 6px}
-    #log{white-space:pre-wrap;background:#0f172a;color:#e2e8f0;padding:12px;border-radius:10px;max-height:240px;overflow:auto;margin:0}
+    h3{margin:0 0 8px}
+
+    /* Inputs */
+    textarea{width:100%;min-height:160px;padding:12px;border:1px solid #cbd5e1;border-radius:12px;font:inherit;background:#fff}
+    input[type=text]{width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:12px;font:inherit;background:#fff}
+    label.inline{display:flex;align-items:center;gap:8px;margin-top:10px}
+    .row{display:flex;gap:8px;flex-wrap:wrap}
+
+    /* Buttons */
+    button{padding:10px 14px;border-radius:12px;border:1px solid var(--slate);background:var(--slate);color:#fff;font-weight:800;cursor:pointer}
+    button.secondary{background:#fff;color:var(--slate)}
+    button.teal{background:var(--teal);border-color:var(--teal)}
+    button.amber{background:var(--amber);border-color:var(--amber)}
+    button:disabled{opacity:.5;cursor:not-allowed}
+
+    /* Lists */
+    .matchlist{list-style:none;margin:0;padding:0}
+    .match{padding:10px;border-bottom:1px solid var(--border);cursor:default}
+    .match:hover{background:#f1f5f9}
+    .meta{font-size:12px;color:var(--muted)}
+    .badge{display:inline-block;background:rgba(245,158,11,.16);color:#9a6700;border:1px solid rgba(245,158,11,.4);padding:2px 6px;border-radius:10px;font-size:11px;margin-left:6px}
+
+    .powered{font-size:12px;color:#94a3b8;margin-top:6px}
+    .powered b{color:#64748b}
+    #ai-status{font-size:12px}
+    .okay{color:var(--ok)} .warn{color:var(--amber)} .err{color:var(--danger)}
   </style>
 </head>
 <body>
 
   <header>
     <div class="bar">
-      <div style="font-weight:800;letter-spacing:.2px">GIAP — Churchen</div>
-      <div class="row" style="margin-top:0">
-        <button class="secondary" title="Install to home screen">Install</button>
-        <button class="secondary" title="Ping API /health">Check API</button>
+      <div class="brand">GIAP — Churchen</div>
+      <div class="pill">beta</div>
+      <div class="right">
+        <div id="balance" class="balance">0.00 Tokens</div>
+        <button id="btn-topup" class="topup">Tokens aufladen</button>
+        <button id="btn-health" class="pill">Check API</button>
       </div>
     </div>
   </header>
 
-  <main>
-    <!-- Intro -->
-    <section class="card">
+  <main class="grid">
+    <!-- Left: Compose & Results -->
+    <section class="card pad">
       <h1>Every Idea. One Click. Global Reach.</h1>
-      <p class="lead">Schreibe deine Idee, erhalte sofort eine Adresse & sieh ähnliche Ideen.</p>
-    </section>
+      <p class="muted">Bearbeite deine Gedanken hier – <b style="color:var(--teal)">Idee</b> verknüpft sich mit der <b style="color:var(--amber)">Außenwelt</b>. Jede Idee bekommt eine Adresse.</p>
 
-    <!-- 1) Capture -->
-    <section class="card">
-      <h2>1) Capture → Churchen</h2>
-      <textarea id="idea" placeholder="Write your idea here…"></textarea>
-      <input id="tags" type="text" placeholder="(optional) tags, comma-separated e.g. water, solar, protocol" />
-      <label style="display:flex;align-items:center;gap:6px;margin-top:8px">
-        <input id="force-gpt" type="checkbox" />
-        <span>Always use GPT heritage (debug)</span>
-      </label>
-      <div class="row">
-        <button id="btn-churchen">Churchen (ID + Matches)</button>
-        <button id="btn-clear" class="secondary">Clear</button>
-      </div>
-      <small class="muted">Hinweis: Der Text wird an deine GIAP-API geschickt (siehe <code class="k">API_BASE</code> in <code class="k">app.js</code>).</small>
-    </section>
-
-    <!-- 2) Ergebnis -->
-    <section class="card" id="out" style="display:none">
-      <h2>2) Ergebnis</h2>
-      <div class="grid">
-        <div>
-          <label>IdeaID</label>
-          <input id="ideaId" type="text" readonly />
+      <div class="card pad" style="margin-top:12px">
+        <h2>1) Capture → Churchen</h2>
+        <textarea id="idea" placeholder="Schreibe deine Idee hier…"></textarea>
+        <input id="tags" type="text" placeholder="(optional) tags, comma-separated e.g. water, solar, protocol" />
+        <label class="inline">
+          <input id="force-gpt" type="checkbox" />
+          <span>Always use GPT heritage (debug)</span>
+        </label>
+        <div class="row" style="margin-top:10px">
+          <button id="btn-churchen" class="teal">Churchen (ID + Matches)</button>
+          <button id="btn-clear" class="secondary">Clear</button>
         </div>
-        <div>
-          <label>Content Hash (SHA-256)</label>
-          <input id="hash" type="text" readonly />
+        <div class="powered">powered by <b>OpenAI</b> · verarbeitet durch deinen <b>GIAP-API</b> Worker</div>
+      </div>
+
+      <div id="out" class="card pad" style="margin-top:12px; display:none">
+        <h2>2) Ergebnis</h2>
+        <div class="row">
+          <div style="flex:1">
+            <label>IdeaID</label>
+            <input id="ideaId" type="text" readonly />
+          </div>
+          <div style="flex:1">
+            <label>Content Hash (SHA-256)</label>
+            <input id="hash" type="text" readonly />
+          </div>
+        </div>
+
+        <div style="margin-top:10px">
+          <h3 style="display:flex;align-items:center;gap:8px;margin:0 0 6px">
+            Matches <span id="ai-status" class="muted"></span>
+          </h3>
+          <ul id="matches" class="matchlist"></ul>
+        </div>
+
+        <div class="row" style="margin-top:8px">
+          <button id="btn-publish" class="amber">Publish (ins Registry)</button>
+          <button id="btn-copy-ideal" class="secondary">Copy IdeaID</button>
+          <button id="btn-open-json" class="secondary" style="display:none">Open public JSON</button>
         </div>
       </div>
 
-      <div style="margin-top:10px">
-        <h3 style="margin:0 0 6px">Matches
-       </h3>
-        <ul id="matches" class="list"></ul>
-        <div style="margin-top:8px">
-          <small id="ai-status" class="muted">AI status: n/a</small>
+      <div class="card pad" style="margin-top:12px">
+        <h2>3) Feed (Neueste)</h2>
+        <div class="row">
+          <button id="btn-feed" class="secondary">Load feed</button>
         </div>
+        <ul id="feed" class="matchlist"></ul>
       </div>
 
-      <div class="row" style="margin-top:10px">
-        <button id="btn-publish">Publish (ins Registry)</button>
-        <button id="btn-copy-ideal" class="secondary">Copy IdeaID</button>
-        <button id="btn-open-json" class="secondary" style="display:none">Open public JSON</button>
+      <div class="card pad" style="margin-top:12px">
+        <h2>Log</h2>
+        <pre id="log" style="white-space:pre-wrap;background:#0f172a;color:#e2e8f0;padding:12px;border-radius:10px;max-height:260px;overflow:auto;margin:0"></pre>
       </div>
     </section>
 
-    <!-- 3) Feed -->
-    <section class="card">
-      <h2>3) Feed (Neueste)</h2>
-      <div class="row">
-        <button id="btn-feed" class="secondary">Load feed</button>
-      </div>
-      <ul id="feed" class="list"></ul>
-    </section>
-
-    <!-- Log -->
-    <section class="card">
-      <h2>Log</h2>
-      <pre id="log"></pre>
-    </section>
+    <!-- Right: Live sidebar -->
+    <aside class="card pad">
+      <h2 style="display:flex;align-items:center;gap:8px">Live Matches <span class="badge">Preview</span></h2>
+      <div class="muted" style="margin-bottom:6px">Zeigt die letzten Churchen-Ergebnisse dieser Sitzung.</div>
+      <ul id="live" class="matchlist"></ul>
+      <div class="powered" style="margin-top:10px">Hinweis: Diese Sidebar aktualisiert sich nach jedem Churchen-Call.</div>
+    </aside>
   </main>
 
-  <script>
-    // Kill any old Service Workers + caches from previous builds
-    (async () => {
-      try {
-        if ('serviceWorker' in navigator) {
-          const regs = await navigator.serviceWorker.getRegistrations();
-          for (const r of regs) { await r.unregister(); }
-        }
-        if (window.caches) {
-          const keys = await caches.keys();
-          for (const k of keys) { await caches.delete(k); }
-        }
-        // optisch: Flag damit du siehst, dass die neue Datei geladen ist
-        document.body.setAttribute('data-appjs', 'v7');
-      } catch (e) {}
-    })();
-  </script>
-
-  <!-- App-Logik -->
-  <script src="app.js?v=7"></script>
+  <script src="app.js?v=8"></script>
 </body>
-</html>   
+</html>
