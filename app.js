@@ -1,310 +1,298 @@
-// app.js — V7 (AI-Status, Keywords, Force-GPT)
+// app.js — V8 (Standalone UI, tokens, live sidebar)
 "use strict";
 
-// === Konfiguration ===
-const API_BASE = "https://giap-api.csac6316.workers.dev"; // Worker-Domain
+/* ================= Config ================= */
+const API_BASE = "https://giap-api.csac6316.workers.dev"; // dein Worker
+const TOKEN_COST = 0.6; // Beispielkosten pro „AI used“ (nur UI)
 
-// === Mini-Utils ===
+/* ============== Mini utils ============== */
 const $ = (sel) => document.querySelector(sel);
-const escapeHtml = (s = "") =>
-  String(s).replaceAll("&", "&amp;").replaceAll("<", "&lt;")
-           .replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+const esc = (s="") => String(s)
+  .replaceAll("&","&amp;").replaceAll("<","&lt;")
+  .replaceAll(">","&gt;").replaceAll('"',"&quot;");
 
-function setBusy(btn, busy, labelWhenBusy = "…") {
-  if (!btn) return;
+function setBusy(btn, busy, label="…"){
+  if(!btn) return;
   btn.disabled = !!busy;
-  if (busy) {
-    btn.dataset.__label = btn.textContent;
-    btn.textContent = labelWhenBusy;
-  } else if (btn.dataset.__label) {
-    btn.textContent = btn.dataset.__label;
-    delete btn.dataset.__label;
+  if(busy){ btn.dataset._txt = btn.textContent; btn.textContent = label; }
+  else if(btn.dataset._txt){ btn.textContent = btn.dataset._txt; delete btn.dataset._txt; }
+}
+function toast(m){ try{ alert(m) }catch{} }
+function logBlock(title, obj){
+  const pre = $("#log"); if(!pre) return;
+  let txt=""; try{ txt = JSON.stringify(obj,null,2) } catch{ txt = String(obj) }
+  pre.textContent = `${title ? title+" ✓ " : ""}{\n${txt}\n}\n\n` + pre.textContent;
+}
+
+/* ============== Token balance (UI) ============== */
+function getBalance(){ return Number(localStorage.getItem("giap_tokens")||"0"); }
+function setBalance(v){ localStorage.setItem("giap_tokens", String(Math.max(0, Number(v)||0))); renderBalance(); }
+function addBalance(v){ setBalance(getBalance() + Number(v||0)); }
+function spendBalance(v){ setBalance(Math.max(0, getBalance() - Number(v||0))); }
+function renderBalance(){ const b=$("#balance"); if(b) b.textContent = `${getBalance().toFixed(2)} Tokens`; }
+
+/* ============== API helpers ============== */
+async function parseRes(res){
+  const ct=(res.headers.get("content-type")||"").toLowerCase();
+  return ct.includes("application/json") ? res.json() : res.text();
+}
+async function GET(path){
+  // probiere /api/* und Root-Fallback (für Health)
+  const urls = [`${API_BASE}${path}`, `${API_BASE}${path.replace(/^\/api/,"")}`];
+  for (const u of urls){
+    try{
+      const r = await fetch(u, { method:"GET", cache:"no-store" });
+      const data = await parseRes(r);
+      if (r.ok) return { ok:true, data };
+      return { ok:false, data };
+    }catch(_){}
   }
+  return { ok:false, data:{ error:"network" } };
+}
+async function POST(path, body){
+  const r = await fetch(`${API_BASE}${path}`, {
+    method:"POST", headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify(body||{})
+  });
+  const data = await parseRes(r);
+  return { ok:r.ok, data };
 }
 
-function logBlock(title, obj) {
-  const pre = $("#log"); if (!pre) return;
-  let txt = ""; try { txt = JSON.stringify(obj, null, 2); } catch { txt = String(obj); }
-  pre.textContent = `${title ? title + " ✓ " : ""}{\n${txt}\n}\n\n` + pre.textContent;
-}
-
-function toast(msg) { try { alert(msg); } catch {} }
-
-// === Öffne öffentliche JSON (mehrere Kandidaten + Fallback) ===
-async function openPublicJsonById(ideaId, { text = "", tags = [] } = {}, allowFallback = false) {
-  if (!ideaId) { toast("Keine IdeaID übergeben."); return; }
-
+/* ============== Public JSON open ============== */
+async function openPublicJsonById(ideaId, fallback = null){
   const candidates = [
-    `${API_BASE}/public/idea/${encodeURIComponent(ideaId)}`,
-    `${API_BASE}/api/idea/${encodeURIComponent(ideaId)}`,
-    `${API_BASE}/api/registry/${encodeURIComponent(ideaId)}`
+    `/public/idea/${encodeURIComponent(ideaId)}`,
+    `/api/idea/${encodeURIComponent(ideaId)}`
   ];
-
-  for (const url of candidates) {
-    try {
-      const r = await fetch(url, { method: "GET", cache: "no-store" });
-      const ct = (r.headers.get("content-type") || "").toLowerCase();
-      if (r.ok && ct.includes("application/json")) {
-        const data = await r.json();
-        const pretty = JSON.stringify(data, null, 2);
-        const blob = new Blob([pretty], { type: "application/json" });
-        const href = URL.createObjectURL(blob);
-        window.open(href, "_blank", "noopener");
-        return;
-      }
-    } catch (_) {}
+  for (const p of candidates){
+    const { ok, data } = await GET(p);
+    if (ok && data){
+      const pretty = JSON.stringify(data, null, 2);
+      const blob = new Blob([pretty], { type:"application/json" });
+      const href = URL.createObjectURL(blob);
+      window.open(href, "_blank", "noopener");
+      return;
+    }
   }
-
-  if (allowFallback) {
-    const pretty = JSON.stringify({ id: ideaId, text, tags, source: "local-fallback" }, null, 2);
-    const blob = new Blob([pretty], { type: "application/json" });
+  if (fallback){
+    const blob = new Blob([JSON.stringify(fallback,null,2)], { type:"application/json" });
     window.open(URL.createObjectURL(blob), "_blank", "noopener");
   } else {
     toast("Öffentliche JSON nicht gefunden.");
   }
 }
 
-// === Globaler UI-State ===
-let LAST_CHURCHEN = null;       // { ideaId, hash, text, tags, matches }
-let LAST_PUBLISHED_ID = null;   // string
-
-// === Renderer ===
-function renderMatches(list = []) {
-  const ul = $("#matches"); if (!ul) return;
-  ul.innerHTML = "";
-  for (const m of list) {
+/* ============== Live sidebar memory ============== */
+let LIVE = []; // {who,title,tags,source,score,id}
+function pushLive(matches=[]){
+  for(const m of (matches||[])){
+    LIVE.unshift({ who:m.who, title:m.title, tags:m.tags, source:m.source, score:m.score, id:m.id });
+  }
+  LIVE = LIVE.slice(0,30);
+  renderLive();
+}
+function renderLive(){
+  const ul = $("#live"); if(!ul) return;
+  ul.innerHTML = LIVE.length ? "" : `<li class="muted" style="padding:10px">Noch keine Ergebnisse.</li>`;
+  for(const m of LIVE){
     const li = document.createElement("li");
-    li.style.padding = "8px";
-    li.style.borderBottom = "1px solid #eee";
-
-    const head = document.createElement("div");
-    head.style.fontWeight = "700";
-    head.textContent = m.who || "GIAP";
-
-    const line = document.createElement("div");
-    line.style.margin = "2px 0 6px";
-    line.textContent = m.title || "";
-
-    const meta = document.createElement("div");
-    meta.className = "muted";
-    meta.innerHTML = `${(m.tags || []).join(", ")}<br/>src: ${m.source || "-"}, score: ${m.score ?? "-"}`;
-
-    const actions = document.createElement("div");
-    actions.className = "row";
-    actions.style.marginTop = "6px";
-
-    const btnJson = document.createElement("button");
-    btnJson.className = "secondary";
-    btnJson.textContent = "JSON";
-    btnJson.onclick = () => {
-      if (m.id) openPublicJsonById(m.id, {}, false);
-      else toast("Für diesen Match gibt es keine ID.");
-    };
-
-    actions.appendChild(btnJson);
-    li.append(head, line, meta, actions);
+    li.className="match";
+    li.innerHTML = `
+      <div style="font-weight:700">${esc(m.who||"GIAP user")}</div>
+      <div>${esc(m.title||"")}</div>
+      <div class="meta">${(m.tags||[]).join(", ") || "&nbsp;"}</div>
+      <div class="meta">src: ${esc(m.source||"-")} • score: ${m.score ?? "-"}</div>
+    `;
     ul.appendChild(li);
   }
 }
 
-function renderFeed(items = []) {
-  const ul = $("#feed"); if (!ul) return;
+/* ============== Render helpers ============== */
+function renderMatches(list=[]){
+  const ul = $("#matches"); if(!ul) return;
   ul.innerHTML = "";
-  if (!items.length) {
+  for(const m of list){
     const li = document.createElement("li");
-    li.textContent = "(leer)";
-    ul.appendChild(li);
-    return;
-  }
-  for (const it of items) {
-    const li = document.createElement("li");
-    li.style.padding = "10px";
-    li.style.borderBottom = "1px solid #eee";
-
-    const head = document.createElement("div");
-    head.style.fontWeight = "700";
-    head.textContent = it.id || "(ohne ID)";
-
-    const preview = document.createElement("div");
-    preview.textContent = (it.text || it.abstract || "").slice(0, 160);
-
-    const meta = document.createElement("div");
-    meta.className = "muted";
-    const when = it.createdAt ? new Date(it.createdAt).toLocaleString() : "";
-    meta.textContent = [ (it.tags || []).join(", "), when ].filter(Boolean).join(" • ");
-
+    li.className = "match";
+    li.innerHTML = `
+      <div style="font-weight:700">${esc(m.who||"GIAP")}</div>
+      <div>${esc(m.title||"")}</div>
+      <div class="meta">${(m.tags||[]).join(", ")}</div>
+      <div class="meta">src: ${m.source||"-"} • score: ${m.score ?? "-"}</div>
+    `;
     const btn = document.createElement("button");
     btn.className = "secondary";
     btn.style.marginTop = "6px";
     btn.textContent = "JSON";
-    btn.onclick = () => openPublicJsonById(it.id, {}, false);
-
-    li.append(head, preview, meta, btn);
+    btn.onclick = () => {
+      if (m.id) openPublicJsonById(m.id, { id:m.id, who:m.who, title:m.title, tags:m.tags||[] });
+      else toast("Für diesen Match gibt es keine ID.");
+    };
+    const wrap = document.createElement("div");
+    wrap.style.marginTop = "6px";
+    wrap.appendChild(btn);
+    li.appendChild(wrap);
+    ul.appendChild(li);
+  }
+}
+function renderFeed(items=[]){
+  const ul = $("#feed"); if(!ul) return;
+  ul.innerHTML = "";
+  if (!items.length){
+    const li = document.createElement("li");
+    li.className="match";
+    li.textContent = "(leer)";
+    ul.appendChild(li);
+    return;
+  }
+  for(const it of items){
+    const li = document.createElement("li");
+    li.className="match";
+    const when = it.createdAt ? new Date(it.createdAt).toLocaleString() : "";
+    li.innerHTML = `
+      <div style="font-weight:700">${esc(it.id || "(ohne ID)")}</div>
+      <div>${esc((it.text||it.abstract||"").slice(0,160))}</div>
+      <div class="meta">${(it.tags||[]).join(", ")} ${when ? "• "+esc(when) : ""}</div>
+    `;
+    const btn = document.createElement("button");
+    btn.className="secondary";
+    btn.style.marginTop="6px";
+    btn.textContent="JSON";
+    btn.onclick = () => openPublicJsonById(it.id, it);
+    li.appendChild(btn);
     ul.appendChild(li);
   }
 }
 
-// === Verkabeln NACH DOM-Ready ===
+/* ============== Page wiring ============== */
 document.addEventListener("DOMContentLoaded", () => {
-  const taIdea       = $("#idea");
-  const inpTags      = $("#tags");
-  const outId        = $("#ideaId");
-  const outHash      = $("#hash");
-  const btnChurchen  = $("#btn-churchen");
-  const btnClear     = $("#btn-clear");
-  const btnPublish   = $("#btn-publish");
-  const btnCopyId    = $("#btn-copy-ideal");
-  const btnOpenJson  = $("#btn-open-json");
-  const btnFeed      = $("#btn-feed");
-  const chkForceGPT  = $("#force-gpt");
-  const aiStatus     = $("#ai-status");
+  renderBalance();
 
-  // 0) Health
-  const checkBtn = document.querySelector("button[title='Ping API /health']");
-  if (checkBtn) {
-    checkBtn.addEventListener("click", async () => {
-      setBusy(checkBtn, true, "Checking…");
-      try {
-        const r = await fetch(`${API_BASE}/health`, { cache: "no-store" });
-        const data = await r.json();
-        logBlock("Health", data);
-        toast(r.ok ? "API OK ✅" : "API Fehler ❌");
-      } catch (e) {
-        toast("Fehler: " + e.message);
-      } finally {
-        setBusy(checkBtn, false);
+  // Top-up (Demo)
+  $("#btn-topup")?.addEventListener("click", () => {
+    addBalance(5);
+    toast("5 Tokens gutgeschrieben (Demo).");
+  });
+
+  // Health
+  $("#btn-health")?.addEventListener("click", async () => {
+    const btn = $("#btn-health");
+    setBusy(btn, true, "Checking…");
+    try{
+      // probiere /api/health und /health
+      let res = await GET("/api/health");
+      if (!res.ok) res = await GET("/health");
+      logBlock("Health", res.data);
+      toast(res.ok ? "API OK ✅" : "API Fehler ❌");
+    } catch(e){
+      toast("Fehler: " + e.message);
+    } finally {
+      setBusy(btn, false);
+    }
+  });
+
+  // Churchen
+  $("#btn-churchen")?.addEventListener("click", async () => {
+    const text = ($("#idea")?.value || "").trim();
+    let tags = ($("#tags")?.value || "").split(",").map(t=>t.trim()).filter(Boolean);
+    if ($("#force-gpt")?.checked) tags.push("force:heritage");
+
+    if (!text){ toast("Bitte zuerst eine Idee eingeben."); return; }
+
+    const btn = $("#btn-churchen");
+    setBusy(btn, true, "Churchen…");
+    $("#ai-status").textContent = "";
+    try{
+      const { ok, data } = await POST("/api/churchen", { text, tags });
+      if (!ok){ toast("Fehler: " + (data?.error || "unknown")); setBusy(btn,false); return; }
+
+      // Ergebnis anzeigen
+      $("#out").style.display = "";
+      $("#ideaId").value = data.ideaId || "";
+      $("#hash").value   = data.hash   || "";
+      renderMatches(data.matches || []);
+      pushLive(data.matches || []);
+      logBlock("Churchen", data);
+
+      // Tokens (nur UI) wenn AI benutzt
+      if (data.ai?.used) spendBalance(TOKEN_COST);
+
+      const aiEl = $("#ai-status");
+      if (data.ai){
+        aiEl.textContent = data.ai.used
+          ? `AI used (${data.ai.model || "?"}) · proposed=${data.ai.proposed ?? "-"} · saved=${data.ai.saved ?? "-"}`
+          : (data.ai.error ? `AI error: ${data.ai.error}` : "AI not used");
+        aiEl.className = data.ai.used ? "okay" : (data.ai.error ? "err" : "warn");
+      } else {
+        aiEl.textContent = "AI status: n/a";
+        aiEl.className = "muted";
       }
-    });
-  }
 
-  // 1) Churchen
-  if (btnChurchen) {
-    btnChurchen.addEventListener("click", async () => {
-      const text = (taIdea?.value || "").trim();
-      let tags = (inpTags?.value || "").split(",").map(t => t.trim()).filter(Boolean);
-      if (chkForceGPT?.checked) tags.push("force:heritage");
-      const keywords = tags.filter(t => !t.includes(':')).slice(0,8);
+      // Reset publish state
+      $("#btn-open-json").style.display = "none";
+    } catch(e){
+      toast("Netzwerkfehler: " + e.message);
+    } finally {
+      setBusy(btn, false);
+    }
+  });
 
-      if (!text) { toast("Bitte zuerst eine Idee eingeben."); return; }
+  // Clear
+  $("#btn-clear")?.addEventListener("click", () => {
+    $("#idea").value = "";
+    $("#tags").value = "";
+    $("#ideaId").value = "";
+    $("#hash").value = "";
+    $("#out").style.display = "none";
+    $("#matches").innerHTML = "";
+    $("#ai-status").textContent = "";
+  });
 
-      setBusy(btnChurchen, true, "Churchen…");
-      aiStatus.textContent = "";
-      try {
-        const r = await fetch(`${API_BASE}/api/churchen`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "Accept":"application/json" },
-          body: JSON.stringify({ text, tags, keywords })
-        });
-        const data = await r.json();
-        if (!r.ok) { toast("Fehler: " + (data?.error || r.status)); return; }
+  // Publish
+  $("#btn-publish")?.addEventListener("click", async () => {
+    const ideaId = ($("#ideaId")?.value || "").trim();
+    const text   = ($("#idea")?.value   || "").trim();
+    let tags = ($("#tags")?.value || "").split(",").map(t=>t.trim()).filter(Boolean);
+    if (!text || !ideaId){ toast("Bitte zuerst ›Churchen‹ ausführen."); return; }
 
-        LAST_CHURCHEN = { ideaId: data.ideaId, hash: data.hash, text, tags, matches: data.matches || [] };
-        if (outId)   outId.value   = data.ideaId || "";
-        if (outHash) outHash.value = data.hash   || "";
-        $("#out").style.display = "";
-        renderMatches(data.matches || []);
-        logBlock("Churchen", data);
+    const btn = $("#btn-publish");
+    setBusy(btn, true, "Publishing…");
+    try{
+      const body = { ideaId, text, tags, abstract: (text||"").slice(0,160) };
+      const { ok, data } = await POST("/api/publish", body);
+      if (!ok || !data?.ok){ toast("Publish fehlgeschlagen: " + (data?.error || "unknown")); return; }
+      logBlock("Publish", data);
+      toast("Veröffentlicht! ✅");
+      $("#btn-open-json").style.display = "";
+      $("#btn-open-json").onclick = () => openPublicJsonById(data.idea?.id || ideaId, data.idea);
+    } catch(e){
+      toast("Netzwerkfehler: " + e.message);
+    } finally {
+      setBusy(btn, false);
+    }
+  });
 
-        if (data.ai) {
-          aiStatus.textContent = data.ai.used
-            ? `AI used (${data.ai.model || "?"}) · proposed=${data.ai.proposed ?? "-"} · saved=${data.ai.saved ?? "-"}`
-            : (data.ai.error ? `AI error: ${data.ai.error}` : "AI not used");
-        } else {
-          aiStatus.textContent = "AI status: n/a";
-        }
+  // Copy IdeaID
+  $("#btn-copy-ideal")?.addEventListener("click", async () => {
+    const val = $("#ideaId")?.value || "";
+    if (!val) { toast("Keine IdeaID vorhanden."); return; }
+    try { await navigator.clipboard.writeText(val); toast("IdeaID kopiert."); }
+    catch { toast("Kopieren nicht möglich."); }
+  });
 
-        LAST_PUBLISHED_ID = null;
-        if (btnOpenJson) btnOpenJson.style.display = "none";
-      } catch (e) {
-        toast("Netzwerkfehler: " + e.message);
-      } finally {
-        setBusy(btnChurchen, false);
-      }
-    });
-  }
-
-  // 2) Clear
-  if (btnClear) {
-    btnClear.addEventListener("click", () => {
-      taIdea.value = "";
-      inpTags.value = "";
-      outId.value = "";
-      outHash.value = "";
-      $("#out").style.display = "none";
-      $("#matches").innerHTML = "";
-      aiStatus.textContent = "";
-      LAST_CHURCHEN = null;
-      LAST_PUBLISHED_ID = null;
-      if (btnOpenJson) btnOpenJson.style.display = "none";
-    });
-  }
-
-  // 3) Publish
-  if (btnPublish) {
-    btnPublish.addEventListener("click", async () => {
-      if (!LAST_CHURCHEN?.ideaId) { toast("Bitte zuerst ›Churchen‹ ausführen."); return; }
-      setBusy(btnPublish, true, "Publishing…");
-      try {
-        const body = {
-          ideaId: LAST_CHURCHEN.ideaId,
-          text: LAST_CHURCHEN.text,
-          tags: LAST_CHURCHEN.tags,
-          abstract: LAST_CHURCHEN.text.slice(0, 160)
-        };
-        const r = await fetch(`${API_BASE}/api/publish`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body)
-        });
-        const data = await r.json();
-        if (!r.ok || !data?.ok) { toast("Publish fehlgeschlagen: " + (data?.error || r.status)); return; }
-
-        logBlock("Publish", data);
-        toast("Veröffentlicht! ✅");
-
-        LAST_PUBLISHED_ID = data.idea?.id || LAST_CHURCHEN.ideaId;
-        if (btnOpenJson) btnOpenJson.style.display = "";
-      } catch (e) {
-        toast("Netzwerkfehler: " + e.message);
-      } finally {
-        setBusy(btnPublish, false);
-      }
-    });
-  }
-
-  // 4) Copy ID
-  if (btnCopyId) {
-    btnCopyId.addEventListener("click", async () => {
-      const val = outId?.value || LAST_CHURCHEN?.ideaId || "";
-      if (!val) { toast("Keine IdeaID vorhanden."); return; }
-      try { await navigator.clipboard.writeText(val); toast("IdeaID kopiert."); }
-      catch { toast("Kopieren nicht möglich."); }
-    });
-  }
-
-  // 5) JSON öffnen
-  if (btnOpenJson) {
-    btnOpenJson.style.display = "none";
-    btnOpenJson.addEventListener("click", () => {
-      const ideaId = (outId.value || LAST_PUBLISHED_ID || "").trim();
-      openPublicJsonById(ideaId, { text: LAST_CHURCHEN?.text || "", tags: LAST_CHURCHEN?.tags || [] }, true);
-    });
-  }
-
-  // 6) Feed
-  if (btnFeed) {
-    btnFeed.addEventListener("click", async () => {
-      setBusy(btnFeed, true, "Loading…");
-      try {
-        const r = await fetch(`${API_BASE}/api/feed?limit=20`, { cache: "no-store" });
-        const data = await r.json();
-        renderFeed(data?.items || []);
-        logBlock("Feed", data);
-      } catch (e) {
-        toast("Fehler beim Laden des Feeds: " + e.message);
-      } finally {
-        setBusy(btnFeed, false);
-      }
-    });
-  }
+  // Feed
+  $("#btn-feed")?.addEventListener("click", async () => {
+    const btn = $("#btn-feed");
+    setBusy(btn, true, "Loading…");
+    try{
+      const { ok, data } = await GET("/api/feed?limit=20");
+      renderFeed(data?.items || []);
+      logBlock("Feed", data);
+      if (!ok) toast("Feed: Fehler");
+    } catch(e){
+      toast("Fehler beim Laden des Feeds: " + e.message);
+    } finally {
+      setBusy(btn, false);
+    }
+  });
 });
